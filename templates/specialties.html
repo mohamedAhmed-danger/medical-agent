@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}التخصصات{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+  <div>
+    <h1 class="page-title">التخصصات</h1>
+    <p class="page-subtitle">
+      إدارة جميع التخصصات الطبية
+    </p>
+  </div>
+
+  <a
+    href="{{ url_for('create_specialty') }}"
+    class="btn btn-primary"
+  >
+    <i data-lucide="plus"></i>
+    إضافة تخصص
+  </a>
+
+</div>
+
+<div class="card">
+
+  <div class="card-header">
+    <h2 class="card-title">
+      قائمة التخصصات
+    </h2>
+  </div>
+
+  <div class="toolbar">
+
+    <div class="search-box">
+      <i data-lucide="search" class="search-icon"></i>
+
+      <input
+        type="text"
+        id="tableSearch"
+        placeholder="ابحث عن تخصص..."
+      >
+    </div>
+
+  </div>
+
+  <div class="table-wrapper">
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>اسم التخصص</th>
+          <th>التفاصيل</th>
+          <th>الإجراءات</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        {% for specialty in specialties %}
+        <tr>
+
+          <td>{{ specialty.id }}</td>
+
+          <td>
+            <span class="badge badge-primary">
+              {{ specialty.name }}
+            </span>
+          </td>
+
+          <td>{{ specialty.details }}</td>
+
+          <td class="table-actions">
+
+            <a
+              href="{{ url_for('edit_specialty', specialty_id=specialty.id) }}"
+              class="btn btn-ghost btn-icon"
+            >
+              <i data-lucide="pencil"></i>
+            </a>
+
+          </td>
+
+        </tr>
+        {% endfor %}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+{% endblock %}
