@@ -21,6 +21,7 @@ class Clinic(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     address = db.Column(db.String(200), nullable=False)
+    info = db.Column(db.String(200), nullable=False)
 
     #relationships     
     doctors = db.relationship('Doctor', backref='clinic', lazy=True)
@@ -106,8 +107,7 @@ class Booking(db.Model):
     __tablename__ = 'bookings'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
-    doctor_name = db.Column(db.String(120))
-    services = db.Column(db.Text)
+    details = db.Column(db.Text)
     date = db.Column(db.String(100))
     phone_number = db.Column(db.String(50))
     are_received = db.Column(db.Boolean, default=False)
