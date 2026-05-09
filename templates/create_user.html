@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}مستخدم جديد{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header" data-animate>
+  <div>
+    <h1 class="page-title">مستخدم جديد</h1>
+    <p class="page-subtitle">إضافة حساب مستخدم جديد إلى النظام</p>
+  </div>
+  <a href="{{ url_for('users') }}" class="btn btn-ghost">
+    <i data-lucide="arrow-right" style="width:16px;height:16px"></i>
+    العودة
+  </a>
+</div>
+
+<!-- Form Card -->
+<div class="card" style="max-width: 560px;" data-animate data-delay="60">
+  <div class="card-header">
+    <span class="card-title">بيانات المستخدم</span>
+    <div style="
+      width:38px; height:38px;
+      background: rgba(99,102,241,0.12);
+      border-radius: var(--radius-sm);
+      display:flex; align-items:center; justify-content:center;
+      color: var(--primary-light);
+    ">
+      <i data-lucide="user-plus" style="width:18px;height:18px"></i>
+    </div>
+  </div>
+
+  <form method="POST" action="{{ url_for('create_user') }}" autocomplete="off">
+    <div class="form-grid">
+
+      <div class="form-group full-width">
+        <label for="name">اسم المستخدم</label>
+        <div class="input-icon-wrapper">
+          <i class="input-icon" data-lucide="user" style="width:15px;height:15px"></i>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            class="form-control"
+            placeholder="أدخل اسم المستخدم"
+            required
+            autofocus
+          >
+        </div>
+        <span class="form-hint">يُستخدم لتسجيل الدخول. يجب أن يكون فريداً.</span>
+      </div>
+
+      <div class="form-group full-width">
+        <label for="password">كلمة المرور</label>
+        <div class="input-icon-wrapper">
+          <i class="input-icon" data-lucide="lock" style="width:15px;height:15px"></i>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-control"
+            placeholder="كلمة مرور قوية"
+            required
+          >
+        </div>
+        <!-- Password strength bar -->
+        <div id="strengthBar" style="
+          height: 3px; border-radius: 2px;
+          background: var(--border); margin-top: 4px;
+          overflow: hidden;
+        ">
+          <div id="strengthFill" style="
+            height: 100%; width: 0%;
+            border-radius: 2px;
+            transition: width 0.3s, background 0.3s;
+          "></div>
+        </div>
+        <span class="form-hint" id="strengthLabel">أدخل كلمة المرور لتقييم قوتها</span>
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-submit">
+        <i data-lucide="save" style="width:16px;height:16px"></i>
+        حفظ المستخدم
+      </button>
+      <a href="{{ url_for('users') }}" class="btn btn-ghost">إلغاء</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  lucide.createIcons();
+
+  // Password strength indicator
+  const pwdInput     = document.getElementById('password');
+  const strengthFill = document.getElementById('strengthFill');
+  const strengthLbl  = document.getElementById('strengthLabel');
+
+  const levels = [
+    { min: 0,  color: '#ef4444', label: 'ضعيفة جداً',  pct: '20%'  },
+    { min: 1,  color: '#f97316', label: 'ضعيفة',        pct: '40%'  },
+    { min: 2,  color: '#eab308', label: 'متوسطة',       pct: '60%'  },
+    { min: 3,  color: '#22c55e', label: 'قوية',         pct: '80%'  },
+    { min: 4,  color: '#6366f1', label: 'ممتازة 🔒',    pct: '100%' },
+  ];
+
+  pwdInput.addEventListener('input', () => {
+    const v = pwdInput.value;
+    let score = 0;
+    if (v.length >= 8)            score++;
+    if (/[A-Z]/.test(v))         score++;
+    if (/[0-9]/.test(v))         score++;
+    if (/[^A-Za-z0-9]/.test(v))  score++;
+
+    if (!v) {
+      strengthFill.style.width = '0%';
+      strengthLbl.textContent  = 'أدخل كلمة المرور لتقييم قوتها';
+      strengthLbl.style.color  = '';
+      return;
+    }
+
+    const lvl = levels[Math.min(score, 4)];
+    strengthFill.style.width      = lvl.pct;
+    strengthFill.style.background = lvl.color;
+    strengthLbl.textContent       = `قوة كلمة المرور: ${lvl.label}`;
+    strengthLbl.style.color       = lvl.color;
+  });
+</script>
+{% endblock %}
