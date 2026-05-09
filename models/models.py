@@ -112,6 +112,7 @@ class Booking(db.Model):
     phone_number = db.Column(db.String(50))
     are_received = db.Column(db.Boolean, default=False)
     booking_time = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    comes_from = db.Column(db.String(100)) # platform Id and page Id
 
 
 class RequestCounter(db.Model):
