@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تسجيل الدخول — Ibyco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    /* Login-only overrides — لا تأثير على باقي الصفحات */
+    body {
+      display: flex;                  /* ← ده المهم */
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin-right: 0 !important;    /* يلغي margin الـ sidebar */
+    }
+
+    .login-bg {
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 50%, rgba(99,102,241,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 30%, rgba(245,158,11,0.06) 0%, transparent 60%),
+        var(--bg-deep);
+    }
+
+    .login-bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    .login-container {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 420px;
+      padding: 1rem;
+    }
+
+    .login-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-accent);
+      border-radius: 16px;
+      padding: 2.5rem;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.5), var(--shadow-glow);
+      animation: loginAppear 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes loginAppear {
+      from { opacity: 0; transform: translateY(24px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)    scale(1);    }
+    }
+
+    .login-logo {
+      display: flex; align-items: center; gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .login-logo .brand-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      box-shadow: 0 0 20px var(--primary-glow);
+    }
+
+    .login-logo .brand-name {
+      font-family: var(--font-display);
+      font-size: 1.4rem; font-weight: 800;
+      letter-spacing: 0.05em;
+    }
+    .login-logo .brand-name span { color: var(--primary-light); }
+
+    .login-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem; font-weight: 700;
+      margin-bottom: 0.4rem;
+      background: linear-gradient(135deg, var(--text-primary), var(--primary-light));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .login-sub {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-bottom: 2rem;
+    }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .login-footer a { color: var(--primary-light); }
+  </style>
+</head>
+<body>
+
+<div class="login-bg"></div>
+
+<!-- Flash messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="flash-container">
+      {% for category, message in messages %}
+        <div class="flash-msg flash-{{ category }}">
+          {% if category == 'success' %}✓{% elif category == 'danger' %}✕{% else %}ℹ{% endif %}
+          {{ message }}
+          <button class="flash-close">✕</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div class="login-container">
+  <div class="login-card">
+
+    <div class="login-logo">
+      <div class="brand-icon">⚡</div>
+      <span class="brand-name">Iby<span>co</span></span>
+    </div>
+
+    <h1 class="login-title">مرحبًا بعودتك</h1>
+    <p class="login-sub">أدخل بيانات حسابك للمتابعة</p>
+
+    <form method="POST" action="{{ url_for('login') }}" autocomplete="off">
+      <div class="form-group" style="margin-bottom:1.25rem">
+        <label for="name">اسم المستخدم</label>
+        <div class="input-icon-wrapper">
+          <i class="input-icon" data-lucide="user" style="width:15px;height:15px"></i>
+          <input
+            type="text" id="name" name="name"
+            class="form-control" placeholder="اسم المستخدم"
+            required autofocus
+          >
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:1.75rem">
+        <label for="password">كلمة المرور</label>
+        <div class="input-icon-wrapper">
+          <i class="input-icon" data-lucide="lock" style="width:15px;height:15px"></i>
+          <input
+            type="password" id="password" name="password"
+            class="form-control" placeholder="••••••••"
+            required
+          >
+          <button type="button" id="togglePwd"
+            style="
+              position:absolute; left:0.75rem; top:50%; transform:translateY(-50%);
+              background:none; border:none; color:var(--text-muted);
+              cursor:pointer; padding:2px;
+            "
+            data-tooltip="إظهار/إخفاء كلمة المرور">
+            <i data-lucide="eye" id="eyeIcon" style="width:15px;height:15px"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-submit" style="width:100%; justify-content:center">
+        <i data-lucide="log-in" style="width:16px;height:16px"></i>
+        تسجيل الدخول
+      </button>
+    </form>
+
+    <div class="login-footer">
+      Developed by <a href="https://revyai.tech/" target="_blank">RevyAI</a>
+    </div>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+  lucide.createIcons();
+
+  const toggleBtn = document.getElementById('togglePwd');
+  const pwdField  = document.getElementById('password');
+  const eyeIcon   = document.getElementById('eyeIcon');
+
+  toggleBtn.addEventListener('click', () => {
+    const show = pwdField.type === 'password';
+    pwdField.type = show ? 'text' : 'password';
+    eyeIcon.setAttribute('data-lucide', show ? 'eye-off' : 'eye');
+    lucide.createIcons();
+  });
+</script>
+</body>
+</html>

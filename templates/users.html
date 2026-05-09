@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}المستخدمين{% endblock %}
+
+{% block content %}
+
+<div class="page-header" data-animate>
+  <div>
+    <h1 class="page-title">المستخدمون</h1>
+    <p class="page-subtitle">إدارة حسابات المستخدمين في النظام</p>
+  </div>
+  <a href="{{ url_for('create_user') }}" class="btn btn-primary">
+    <i data-lucide="plus" style="width:16px;height:16px"></i>
+    مستخدم جديد
+  </a>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar" data-animate data-delay="60">
+  <div class="search-box">
+    <i class="search-icon" data-lucide="search" style="width:15px;height:15px"></i>
+    <input type="text" id="tableSearch" placeholder="بحث عن مستخدم...">
+  </div>
+  <span class="badge badge-primary">{{ users|length }} مستخدم</span>
+</div>
+
+<!-- Table -->
+<div class="card" data-animate data-delay="120" style="padding:0">
+  {% if users %}
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>اسم المستخدم</th>
+            <th>الحالة</th>
+            <th style="text-align:left">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td style="color:var(--text-muted); font-size:0.8rem">{{ loop.index }}</td>
+            <td>
+              <div style="display:flex; align-items:center; gap:0.75rem">
+                <div style="
+                  width:36px; height:36px;
+                  border-radius:50%;
+                  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+                  display:flex; align-items:center; justify-content:center;
+                  font-family: var(--font-display);
+                  font-size:0.85rem; font-weight:700; color:#fff;
+                  flex-shrink:0;
+                ">{{ user.username[0]|upper }}</div>
+                <span style="color:var(--text-primary); font-weight:500">{{ user.username }}</span>
+              </div>
+            </td>
+            <td><span class="badge badge-success">نشط</span></td>
+            <td>
+              <div class="table-actions">
+                <a href="{{ url_for('edit_user', user_id=user.id) }}"
+                   class="btn btn-ghost btn-icon"
+                   data-tooltip="تعديل">
+                  <i data-lucide="pencil" style="width:15px;height:15px"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">👤</div>
+      <p>لا يوجد مستخدمون حتى الآن</p>
+      <a href="{{ url_for('create_user') }}" class="btn btn-primary">
+        <i data-lucide="plus" style="width:16px;height:16px"></i>
+        أضف مستخدمًا
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>lucide.createIcons();</script>
+{% endblock %}
