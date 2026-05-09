@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}إضافة طبيب{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1 class="page-title">إضافة طبيب</h1>
+</div>
+
+<div class="card">
+
+<form method="POST">
+
+<div class="form-grid">
+
+<div class="form-group">
+<label>اسم الطبيب</label>
+<input type="text"
+       name="name"
+       class="form-control"
+       required>
+</div>
+
+<div class="form-group">
+<label>العيادة</label>
+<select name="clinic_id"
+        class="form-control"
+        required>
+
+{% for clinic in clinics %}
+<option value="{{ clinic.id }}">
+    {{ clinic.name }}
+</option>
+{% endfor %}
+
+</select>
+</div>
+
+<div class="form-group full-width">
+<label>معلومات الطبيب</label>
+<textarea name="doctor_info"
+          class="form-control"
+          required></textarea>
+</div>
+
+</div>
+
+<div class="form-actions">
+<button type="submit"
+        class="btn btn-primary btn-submit">
+حفظ
+</button>
+
+<a href="{{ url_for('list_doctors') }}"
+   class="btn btn-ghost">
+إلغاء
+</a>
+</div>
+
+</form>
+
+</div>
+
+{% endblock %}
