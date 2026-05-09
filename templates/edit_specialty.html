@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}تعديل تخصص{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+  <div>
+    <h1 class="page-title">تعديل التخصص</h1>
+
+    <p class="page-subtitle">
+      تعديل بيانات التخصص
+    </p>
+  </div>
+
+</div>
+
+<div class="card">
+
+<form method="POST">
+
+  <div class="form-grid">
+
+    <div class="form-group">
+
+      <label>اسم التخصص</label>
+
+      <input
+        type="text"
+        name="name"
+        class="form-control"
+        value="{{ specialty.name }}"
+        required
+      >
+
+    </div>
+
+    <div class="form-group full-width">
+
+      <label>تفاصيل التخصص</label>
+
+      <textarea
+        name="details"
+        class="form-control"
+        rows="5"
+      >{{ specialty.details }}</textarea>
+
+    </div>
+
+  </div>
+
+  <div class="form-actions">
+
+    <button
+      type="submit"
+      class="btn btn-primary btn-submit"
+    >
+      حفظ التعديل
+    </button>
+
+    <a
+      href="{{ url_for('list_specialties') }}"
+      class="btn btn-ghost"
+    >
+      رجوع
+    </a>
+
+  </div>
+
+</form>
+
+</div>
+
+{% endblock %}

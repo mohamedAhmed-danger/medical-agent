@@ -4,6 +4,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from software_services.User_services import UserService
 from software_services.clinic_services import ClinicService 
 from software_services.doctor_services import DoctorService  
+from software_services.specialty_services import SpecialtyService
 from models.models import db, User
 
 
@@ -214,6 +215,66 @@ def edit_doctor(doctor_id):
     return render_template('edit_doctor.html', doctor=doctor)
 
 # end of doctor routes
+
+#sepcialties routes
+
+#this route is used to display all specialties
+@app.route('/specialties')
+@login_required
+def list_specialties():
+    specialties, message = SpecialtyService.get_all_specialties()
+    return render_template('specialties.html', specialties=specialties)
+
+#this route is used to create a new specialty and save it in the database
+@app.route('/specialties/new', methods=['GET', 'POST'])
+@login_required
+def create_specialty():
+    clinics, _ = ClinicService.get_all_clinics()
+
+    if request.method == 'POST':
+        name = request.form['name']
+        details = request.form['details']
+        clinic_id = request.form['clinic_id']
+
+        specialty, message = SpecialtyService.create_specialty(
+            name,
+            details,
+            clinic_id
+        )
+
+        if specialty:
+            flash(message, 'success')
+            return redirect(url_for('list_specialties'))
+        else:
+            flash(message, 'danger')
+
+    return render_template(
+        'create_specialty.html',
+        clinics=clinics
+    )
+
+    #this route is used to edit a specialty by id and update it in the database
+@app.route('/specialties/<int:specialty_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_specialty(specialty_id):
+    specialty, message = SpecialtyService.get_specialty_by_id(specialty_id)
+
+    if not specialty:
+        flash(message, 'danger')
+        return redirect(url_for('list_specialties'))       
+
+    if request.method == 'POST':
+        name      = request.form['name']
+        details   = request.form['details']
+        updated_specialty, message = SpecialtyService.update_specialty(specialty_id, name, details)
+
+        if updated_specialty:
+            flash(message, 'success')
+            return redirect(url_for('list_specialties'))   
+        else:
+            flash(message, 'danger')
+
+    return render_template('edit_specialty.html', specialty=specialty)    
 
 if __name__ == '__main__':
     app.run(debug=True)

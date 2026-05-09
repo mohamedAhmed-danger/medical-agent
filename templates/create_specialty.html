@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}إضافة تخصص{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+  <div>
+    <h1 class="page-title">إضافة تخصص</h1>
+    <p class="page-subtitle">
+      إنشاء تخصص طبي جديد
+    </p>
+  </div>
+
+</div>
+
+<div class="card">
+
+<form method="POST">
+
+  <div class="form-grid">
+
+    <div class="form-group">
+
+      <label>اسم التخصص</label>
+
+      <input
+        type="text"
+        name="name"
+        class="form-control"
+        required
+      >
+
+    </div>
+
+    <div class="form-group">
+
+      <label>العيادة</label>
+
+      <select
+        name="clinic_id"
+        class="form-control"
+        required
+      >
+
+        {% for clinic in clinics %}
+        <option value="{{ clinic.id }}">
+          {{ clinic.name }}
+        </option>
+        {% endfor %}
+
+      </select>
+
+    </div>
+
+    <div class="form-group full-width">
+
+      <label>تفاصيل التخصص</label>
+
+      <textarea
+        name="details"
+        class="form-control"
+        rows="5"
+      ></textarea>
+
+    </div>
+
+  </div>
+
+  <div class="form-actions">
+
+    <button
+      type="submit"
+      class="btn btn-primary btn-submit"
+    >
+      حفظ
+    </button>
+
+    <a
+      href="{{ url_for('list_specialties') }}"
+      class="btn btn-ghost"
+    >
+      رجوع
+    </a>
+
+  </div>
+
+</form>
+
+</div>
+
+{% endblock %}
