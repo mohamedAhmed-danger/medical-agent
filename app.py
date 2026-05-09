@@ -2,7 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_migrate import Migrate
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from software_services.User_services import UserService
-from software_services.clinic_services import ClinicService   
+from software_services.clinic_services import ClinicService 
+from software_services.doctor_services import DoctorService  
 from models.models import db, User
 
 
@@ -101,14 +102,14 @@ def edit_user(user_id):
 
 #  CLINICS
 
-
+#this route is used to display all clinics
 @app.route('/clinics')
 @login_required                              
 def list_clinics():
     clinics, message = ClinicService.get_all_clinics()
     return render_template('clinics.html', clinics=clinics)
 
-
+#this route is used to create a new clinic and save it in the database
 @app.route('/clinics/new', methods=['GET', 'POST'])
 @login_required                              
 def create_clinic():
@@ -126,7 +127,7 @@ def create_clinic():
 
     return render_template('create_clinic.html')
 
-
+#this route is used to edit a clinic by id and update it in the database
 @app.route('/clinics/<int:clinic_id>/edit', methods=['GET', 'POST'])   
 @login_required                                                       
 def edit_clinic(clinic_id):
@@ -144,13 +145,75 @@ def edit_clinic(clinic_id):
 
         if updated_clinic:
             flash(message, 'success')
-            return redirect(url_for('list_clinics'))   # ← fixed
+            return redirect(url_for('list_clinics'))   
         else:
             flash(message, 'danger')
 
     return render_template('edit_clinic.html', clinic=clinic)
+# end of clinic routes
+
+#  DOCTORS
+
+#this route is used to display all doctors
+@app.route('/doctors')
+@login_required
+def list_doctors():
+    doctors, message = DoctorService.get_all_doctors()
+    return render_template('doctors.html', doctors=doctors)
 
 
+#this route is used to create a new doctor and save it in the database
+@app.route('/doctors/new', methods=['GET', 'POST'])
+@login_required
+def create_doctor():
+    clinics, _ = ClinicService.get_all_clinics()
+
+    if request.method == 'POST':
+        name = request.form['name']
+        doctor_info = request.form['doctor_info']
+        clinic_id = request.form['clinic_id']
+
+        doctor, message = DoctorService.create_doctor(
+            name,
+            doctor_info,
+            clinic_id
+        )
+
+        if doctor:
+            flash(message, 'success')
+            return redirect(url_for('list_doctors'))
+        else:
+            flash(message, 'danger')
+
+    return render_template(
+        'create_doctor.html',
+        clinics=clinics
+    )
+
+#this route is used to edit a doctor by id and update it in the database
+@app.route('/doctors/<int:doctor_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_doctor(doctor_id):
+    doctor, message = DoctorService.get_doctor_by_id(doctor_id)
+
+    if not doctor:
+        flash(message, 'danger')
+        return redirect(url_for('list_doctors'))       
+
+    if request.method == 'POST':
+        name      = request.form['name']
+        doctor_info = request.form['doctor_info']
+        updated_doctor, message = DoctorService.update_doctor(doctor_id, name, doctor_info)
+
+        if updated_doctor:
+            flash(message, 'success')
+            return redirect(url_for('list_doctors'))   
+        else:
+            flash(message, 'danger')
+
+    return render_template('edit_doctor.html', doctor=doctor)
+
+# end of doctor routes
 
 if __name__ == '__main__':
     app.run(debug=True)
