@@ -4,17 +4,23 @@ class DoctorService:
     # this function is used to create a new doctor in the database
     @staticmethod
     def create_doctor(name, doctor_info, clinic_id):
-      new_doctor = Doctor(
-        name=name,
-        doctor_info=doctor_info,
-        clinic_id=clinic_id
-        )
+      existing_doctor = Doctor.query.filter_by(name=name, clinic_id=clinic_id).first()
+      if existing_doctor:
+          return None, "يوجد طبيب آخر بنفس هذا الاسم في العيادة"
+      
+      try:
+          new_doctor = Doctor(
+          name=name,
+          doctor_info=doctor_info,
+          clinic_id=clinic_id
+                             )
 
-      db.session.add(new_doctor)
-      db.session.commit()
-
-      return new_doctor, "تم إنشاء الطبيب بنجاح"
-
+          db.session.add(new_doctor)
+          db.session.commit()
+          return new_doctor, "تم إنشاء الطبيب بنجاح"
+      except Exception as e:
+            db.session.rollback() 
+            return None, f"حدث خطأ أثناء إنشاء الطبيب: {str(e)}"
     # this function is used to get a doctor by id
     @staticmethod
     def get_doctor_by_id(doctor_id):
@@ -40,12 +46,17 @@ class DoctorService:
         if not doctor:
             return None, "الطبيب غير موجود"
 
-        if name is not None:
+        if name :
+            existing_doctor = Doctor.query.filter_by(name=name, clinic_id=doctor.clinic_id).first()
+            if existing_doctor and existing_doctor.id != doctor.id:
+                return None, "يوجد طبيب آخر بنفس هذا الاسم في العيادة"
             doctor.name = name
 
         if doctor_info is not None:
             doctor.doctor_info = doctor_info
-
-        db.session.commit()
-
-        return doctor, "تم تحديث الطبيب بنجاح"
+        try:
+          db.session.commit()
+          return doctor, "تم تحديث الطبيب بنجاح"
+        except Exception as e:
+          db.session.rollback()
+          return None, f"حدث خطأ أثناء تحديث الطبيب: {str(e)}"

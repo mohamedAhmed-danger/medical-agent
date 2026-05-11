@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}الخدمات{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+  <div>
+    <h1 class="page-title">الخدمات</h1>
+
+    <p class="page-subtitle">
+      إدارة جميع الخدمات الطبية
+    </p>
+  </div>
+
+  <a
+    href="{{ url_for('create_service') }}"
+    class="btn btn-primary"
+  >
+    <i data-lucide="plus"></i>
+    إضافة خدمة
+  </a>
+
+</div>
+
+<div class="card">
+
+  <div class="card-header">
+
+    <h2 class="card-title">
+      قائمة الخدمات
+    </h2>
+
+  </div>
+
+  <div class="toolbar">
+
+    <div class="search-box">
+
+      <i data-lucide="search" class="search-icon"></i>
+
+      <input
+        type="text"
+        id="tableSearch"
+        placeholder="ابحث عن خدمة..."
+      >
+
+    </div>
+
+  </div>
+
+  <div class="table-wrapper">
+
+    <table>
+
+      <thead>
+
+        <tr>
+          <th>#</th>
+          <th>اسم الخدمة</th>
+          <th>الوصف</th>
+          <th>السعر</th>
+          <th>العيادة</th>
+          <th>الإجراءات</th>
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        {% for service in services %}
+
+        <tr>
+
+          <td>{{ service.id }}</td>
+
+          <td>
+            <span class="badge badge-primary">
+              {{ service.name }}
+            </span>
+          </td>
+
+          <td>{{ service.description }}</td>
+
+          <td>{{ service.price }} ج.م</td>
+
+          <td>{{ service.clinic.name }}</td>
+
+          <td class="table-actions">
+
+            <a
+              href="{{ url_for('edit_service', service_id=service.id) }}"
+              class="btn btn-ghost btn-icon"
+            >
+              <i data-lucide="pencil"></i>
+            </a>
+
+          </td>
+
+        </tr>
+
+        {% endfor %}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</div>
+
+{% endblock %}

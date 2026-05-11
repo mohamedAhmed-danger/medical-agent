@@ -20,6 +20,7 @@
        name="name"
        class="form-control"
        value="{{ doctor.name }}"
+       maxlength="100"
        required>
 </div>
 
@@ -27,7 +28,8 @@
 <label>معلومات الطبيب</label>
 <textarea name="doctor_info"
           class="form-control"
-          required>{{ doctor.doctor_info }}</textarea>
+          required
+          maxlength="200">{{ doctor.doctor_info }}</textarea>
 </div>
 
 </div>

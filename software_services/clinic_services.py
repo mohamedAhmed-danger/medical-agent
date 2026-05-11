@@ -6,12 +6,18 @@ class ClinicService:
     # this function is used to create a new clinic in the database
     @staticmethod
     def create_clinic(name, address, info):
-        new_clinic = Clinic(name=name, address=address, info=info)
+        existing_clinic = Clinic.query.filter_by(name=name).first()
+        if existing_clinic:
+            return None, "يوجد عيادة أخرى بنفس هذا الاسم"
+        try:
+          new_clinic = Clinic(name=name, address=address, info=info)
+          db.session.add(new_clinic)
+          db.session.commit()
+          return new_clinic, "تم إنشاء العيادة بنجاح"
+        except Exception as e:
+            db.session.rollback()
+            return None, f"حدث خطأ أثناء إنشاء العيادة: {str(e)}"
 
-        db.session.add(new_clinic)
-        db.session.commit()
-
-        return new_clinic, "تم إنشاء العيادة بنجاح"
 
     # this function is used to get a clinic by id
     @staticmethod
@@ -38,15 +44,20 @@ class ClinicService:
         if not clinic:
             return None, "العيادة غير موجودة"
 
-        if name is not None:
-            clinic.name = name
+        if name :
+                existing_clinic = Clinic.query.filter_by(name=name).first()
+                if existing_clinic and existing_clinic.id != clinic.id:
+                    return None, "يوجد عيادة أخرى بنفس هذا الاسم"
+                clinic.name = name
 
         if address is not None:
             clinic.address = address
 
         if info is not None:
             clinic.info = info
-
-        db.session.commit()
-
-        return clinic, "تم تحديث العيادة بنجاح"
+        try:
+          db.session.commit()
+          return clinic, "تم تحديث العيادة بنجاح"
+        except Exception as e:
+          db.session.rollback()
+          return None, f"حدث خطأ أثناء تحديث العيادة: {str(e)}"

@@ -6,12 +6,21 @@ class UserService:
     # this function is used to create a new user in the database
     @staticmethod
     def create_user(name, password):
-        new_user = User(username=name, password=password)
+        existing_user= User.query.filter_by(username=name).first()
+        if existing_user:
+            return None, "اسم المستخدم موجود بالفعل"
+        
+        try:
+            new_user = User(username=name, password=password)
+            db.session.add(new_user)
+            db.session.commit()
+            return new_user, "تم إنشاء المستخدم بنجاح"
+        except Exception as e:
+            db.session.rollback()
+            return None, f"حدث خطأ أثناء إنشاء المستخدم: {str(e)}"
+           
 
-        db.session.add(new_user)
-        db.session.commit()
-
-        return new_user, "تم إنشاء المستخدم بنجاح"
+        
 
     # update user with validation
     @staticmethod
@@ -31,11 +40,12 @@ class UserService:
 
         if password:
             user.password = password
-
-        db.session.commit()
-
-        return user, "تم تحديث المستخدم بنجاح"
-
+        try:
+          db.session.commit()
+          return user, "تم تحديث المستخدم بنجاح"
+        except Exception as e:
+          db.session.rollback()
+          return None, f"حدث خطأ أثناء تحديث المستخدم: {str(e)}"
     # this function is used to login a user by checking the name and password
     @staticmethod
     def login_user(name, password):
