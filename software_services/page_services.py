@@ -6,13 +6,16 @@ class PageService:
     def get_all_pages():
         pages = Page.query.all()
         return pages, "تم العثور على جميع الصفحات"
-#this function is used to get a page by id and platform id
+    
+    #this function is used to get a page by id and platform id
     @staticmethod
     def get_page_by_id(platform_id, page_id):
         page_obj = Page.query.filter_by(platform_id=platform_id, page_id=page_id).first()
         if page_obj:
             return page_obj, "تم العثور على الصفحة"
         return None, "الصفحة غير موجودة"
+
+
     #this function is used to create a new page in the database
     @staticmethod
     def create_page(clinic_id, platform_id, page_id, token):
