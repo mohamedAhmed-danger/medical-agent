@@ -8,6 +8,7 @@ from software_services.specialty_services import SpecialtyService
 from software_services.service_services import ServiceService
 from software_services.platform_services import PlatformService
 from software_services.page_services import PageService
+from software_services.booking_services import BookingService
 from models.models import db, User
 
 
@@ -423,7 +424,7 @@ def create_page():
     platforms, _ = PlatformService.get_all_platforms()
     return render_template('create_page.html', clinics=clinics, platforms=platforms)
 
-
+# this route is used to edit a page by id and update it in the database
 @app.route('/pages/<int:platform_id>/<page_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_page(platform_id, page_id):
@@ -451,6 +452,31 @@ def edit_page(platform_id, page_id):
     clinics, _ = ClinicService.get_all_clinics()
     platforms, _ = PlatformService.get_all_platforms()
     return render_template('edit_page.html', page=page, clinics=clinics, platforms=platforms)
+# end of pages routes
+
+#this is route for display the bookings
+@app.route('/bookings')
+@login_required
+def list_bookings():
+    bookings, message = BookingService.display_bookings()
+    return render_template('bookings.html', bookings=bookings)
+
+#this is route for make toggle
+@app.route('/bookings/toggle_received/<int:booking_id>', methods=['POST'])
+@login_required
+def toggle_booking_received(booking_id):
+    booking, message = BookingService.get_booking_by_id(booking_id)
+    if not booking:
+        flash(message, 'danger')
+        return redirect(url_for('list_bookings'))
+
+    updated_booking, message = BookingService.update_booking_received(booking_id, not booking.are_received)
+    if updated_booking:
+        flash(message, 'success')
+    else:
+        flash(message, 'danger')
+
+    return redirect(url_for('list_bookings'))
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -3,7 +3,7 @@ from models.models import Client, db
 class ClientService:
     # this funciton is used to create a new client in the database and create
     @staticmethod
-    def create_client(platform_id, page_id, sender_id, clinic_id, last_bot_replay, summary):
+    def create_client(platform_id, page_id, sender_id, last_bot_replay, summary):
             existing_client = Client.query.filter_by(platform_id=platform_id, page_id=page_id, sender_id=sender_id).first()
             if existing_client:
                 return None, "هذا العميل موجود بالفعل"  
@@ -12,7 +12,6 @@ class ClientService:
                     platform_id=platform_id,
                     page_id=page_id,
                     sender_id=sender_id,
-                    clinic_id=clinic_id,
                     last_bot_replay=last_bot_replay,
                     summary=summary
                 )

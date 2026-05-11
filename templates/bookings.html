@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}الحجوزات{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">الحجوزات</h1>
+    <p class="page-subtitle">حجوزات آخر يومين</p>
+  </div>
+  <div>
+    <button class="btn btn-ghost" onclick="filterBookings('all')">الكل</button>
+    <button class="btn btn-ghost" onclick="filterBookings('received')">تم الاستلام</button>
+    <button class="btn btn-ghost" onclick="filterBookings('not_received')">لم يُستلم</button>
+  </div>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>الاسم</th>
+        <th>التفاصيل</th>
+        <th>التاريخ</th>
+        <th>رقم الهاتف</th>
+        <th>المصدر</th>
+        <th>وقت الحجز</th>
+        <th>تم الاستلام</th>
+      </tr>
+    </thead>
+    <tbody id="bookingsTable">
+      {% for booking in bookings %}
+      <tr data-received="{{ 'true' if booking.are_received else 'false' }}">
+        <td>{{ booking.name }}</td>
+        <td>{{ booking.details }}</td>
+        <td>{{ booking.date }}</td>
+        <td>{{ booking.phone_number }}</td>
+        <td>{{ booking.comes_from }}</td>
+        <td>{{ booking.booking_time.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>
+          <form action="{{ url_for('toggle_booking_received', booking_id=booking.id) }}" method="POST">
+            <button type="submit" class="btn {% if booking.are_received %}btn-primary{% else %}btn-ghost{% endif %}">
+              {% if booking.are_received %}✓ تم{% else %}لم يُستلم{% endif %}
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="7">لا توجد حجوزات</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  lucide.createIcons();
+
+  function filterBookings(type) {
+    const rows = document.querySelectorAll('#bookingsTable tr[data-received]');
+    rows.forEach(row => {
+      const received = row.dataset.received;
+      if (type === 'all') {
+        row.style.display = '';
+      } else if (type === 'received') {
+        row.style.display = received === 'true' ? '' : 'none';
+      } else if (type === 'not_received') {
+        row.style.display = received === 'false' ? '' : 'none';
+      }
+    });
+  }
+</script>
+{% endblock %}
