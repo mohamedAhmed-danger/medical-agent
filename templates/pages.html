@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}الصفحات{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">الصفحات</h1>
+    <p class="page-subtitle">قائمة الصفحات المتاحة</p>
+  </div>
+  <a href="{{ url_for('create_page') }}" class="btn btn-primary">إضافة صفحة</a>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>المنصة</th>
+        <th>Page ID</th>
+        <th>العيادة</th>
+        <th>الإجراءات</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for page in pages %}
+      <tr>
+        <td>{{ page.platform.name }}</td>
+        <td>{{ page.page_id }}</td>
+        <td>{{ page.clinic.name }}</td>
+        <td>
+          <a href="{{ url_for('edit_page', platform_id=page.platform_id, page_id=page.page_id) }}" class="btn btn-ghost">
+            تعديل
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4">لا توجد صفحات</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

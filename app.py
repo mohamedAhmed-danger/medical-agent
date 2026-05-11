@@ -7,6 +7,7 @@ from software_services.doctor_services import DoctorService
 from software_services.specialty_services import SpecialtyService
 from software_services.service_services import ServiceService
 from software_services.platform_services import PlatformService
+from software_services.page_services import PageService
 from models.models import db, User
 
 
@@ -394,10 +395,62 @@ def edit_platform(platform_id):
     return render_template('edit_platform.html', platform=platform)
 
 # end of platforms routes
+#  pages routes
+
+# this route is used to display the pages
+@app.route('/pages')
+@login_required
+def list_pages():
+    pages, message = PageService.get_all_pages()
+    return render_template('pages.html', pages=pages)
+#this route to add page
+@app.route('/pages/new', methods=['GET', 'POST'])
+@login_required
+def create_page():
+    if request.method == 'POST':
+        clinic_id = request.form['clinic_id']
+        platform_id = request.form['platform_id']
+        page_id = request.form['page_id']
+        token = request.form['token']
+        page, message = PageService.create_page(clinic_id, platform_id, page_id, token)
+        if page:
+            flash(message, 'success')
+            return redirect(url_for('list_pages'))
+        else:
+            flash(message, 'danger')
+
+    clinics, _ = ClinicService.get_all_clinics()
+    platforms, _ = PlatformService.get_all_platforms()
+    return render_template('create_page.html', clinics=clinics, platforms=platforms)
 
 
+@app.route('/pages/<int:platform_id>/<page_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_page(platform_id, page_id):
+    page, message = PageService.get_page_by_id(platform_id=platform_id, page_id=page_id)
+    if not page:
+        flash(message, 'danger')
+        return redirect(url_for('list_pages'))
 
+    if request.method == 'POST':
+        clinic_id = request.form['clinic_id']
+        platform_id_new = request.form['platform_id']
+        token = request.form['token']
+        updated_page, message = PageService.update_page(
+            page_id=page.page_id,
+            clinic_id=clinic_id,
+            platform_id=platform_id_new,
+            token=token
+        )
+        if updated_page:
+            flash(message, 'success')
+            return redirect(url_for('list_pages'))
+        else:
+            flash(message, 'danger')
 
+    clinics, _ = ClinicService.get_all_clinics()
+    platforms, _ = PlatformService.get_all_platforms()
+    return render_template('edit_page.html', page=page, clinics=clinics, platforms=platforms)
 
 if __name__ == '__main__':
     app.run(debug=True)
