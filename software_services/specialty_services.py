@@ -46,6 +46,7 @@ class SpecialtyService:
 
         if name:
             # نتأكد إن الاسم الجديد مش مستخدم في نفس عيادة التخصص ده
+            name=name.strip().lower()
             existing = Specialty.query.filter_by(name=name, clinic_id=specialty.clinic_id).first()
             if existing and existing.id != specialty.id:
                 return None, "يوجد تخصص آخر بنفس هذا الاسم في العيادة"
