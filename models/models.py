@@ -57,7 +57,7 @@ class Service(db.Model):
 
 class Platform(db.Model):
     __tablename__ = 'platforms'
-    id = db.Column(db.String(100), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False) # (whatsapp, facebook)
     #relationships
     pages = db.relationship('Page', backref='platform', lazy=True)
@@ -69,7 +69,7 @@ class Page(db.Model):
         PrimaryKeyConstraint('platform_id', 'page_id'),  # Composite PK
     )
     clinic_id = db.Column(db.Integer, db.ForeignKey('clinics.id'), nullable=False)
-    platform_id = db.Column(db.String(100), db.ForeignKey('platforms.id'), nullable=False)
+    platform_id = db.Column(db.Integer, db.ForeignKey('platforms.id'), nullable=False)
     page_id = db.Column(db.String(100), nullable=False)
     token = db.Column(db.String(200), nullable=False)
 
@@ -85,7 +85,7 @@ class Client(db.Model):
         ),
     )
 
-    platform_id = db.Column(db.String(100), nullable=False)
+    platform_id = db.Column(db.Integer, nullable=False)
     page_id = db.Column(db.String(100), nullable=False)
     sender_id = db.Column(db.String(100), nullable=False)
     summary = db.Column(db.String(200))

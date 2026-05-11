@@ -4,6 +4,7 @@ class DoctorService:
     # this function is used to create a new doctor in the database
     @staticmethod
     def create_doctor(name, doctor_info, clinic_id):
+      name=name.strip().lower
       existing_doctor = Doctor.query.filter_by(name=name, clinic_id=clinic_id).first()
       if existing_doctor:
           return None, "يوجد طبيب آخر بنفس هذا الاسم في العيادة"
@@ -47,6 +48,7 @@ class DoctorService:
             return None, "الطبيب غير موجود"
 
         if name :
+            name=name.strip().lower()
             existing_doctor = Doctor.query.filter_by(name=name, clinic_id=doctor.clinic_id).first()
             if existing_doctor and existing_doctor.id != doctor.id:
                 return None, "يوجد طبيب آخر بنفس هذا الاسم في العيادة"

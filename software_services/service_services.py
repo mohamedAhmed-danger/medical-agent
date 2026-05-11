@@ -4,6 +4,7 @@ class ServiceService:
     # this function is used to create a new service in db
 
     def create_service(name, description, clinic_id, price):
+        name=name.strip().lower()
         exiting_service = Service.query.filter_by(name=name, clinic_id=clinic_id).first()
         if exiting_service:
             return None, "يوجد خدمة أخرى بنفس هذا الاسم في العيادة"
@@ -44,6 +45,7 @@ class ServiceService:
             return None, "الخدمة غير موجودة"
 
         if name:
+            name=name.strip().lower()
             existing_service = Service.query.filter_by(name=name, clinic_id=service.clinic_id).first()
             if existing_service and existing_service.id != service.id:
                 return None, "يوجد خدمة أخرى بنفس هذا الاسم في العيادة"

@@ -6,6 +6,7 @@ class UserService:
     # this function is used to create a new user in the database
     @staticmethod
     def create_user(name, password):
+        name=name.strip().lower()
         existing_user= User.query.filter_by(username=name).first()
         if existing_user:
             return None, "اسم المستخدم موجود بالفعل"

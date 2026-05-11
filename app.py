@@ -6,6 +6,7 @@ from software_services.clinic_services import ClinicService
 from software_services.doctor_services import DoctorService  
 from software_services.specialty_services import SpecialtyService
 from software_services.service_services import ServiceService
+from software_services.platform_services import PlatformService
 from models.models import db, User
 
 
@@ -345,6 +346,55 @@ def edit_service(service_id):
     return render_template('edit_service.html', service=service)
 
 # end of services routes
+
+# platforms routes
+
+# this route is used to display all platforms
+@app.route('/platforms')
+@login_required
+def list_platforms():
+    platforms, message = PlatformService.get_all_platforms()
+    return render_template('platforms.html', platforms=platforms)
+
+
+# this route is used to create a new platform and save it in the database
+@app.route('/platforms/new', methods=['GET', 'POST'])
+@login_required
+def create_platform():
+    if request.method == 'POST':
+        name = request.form['name']
+        platform, message= PlatformService.create_platform(name)
+        if platform:
+            flash(message, 'success')
+            return redirect(url_for('list_platforms'))
+        else:
+            flash(message, 'danger')
+    return render_template('create_platform.html')
+
+@app.route('/platforms/<int:platform_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_platform(platform_id):
+    platform, message = PlatformService.get_platform_by_id(platform_id)
+
+    if not platform:
+        flash(message, 'danger')
+        return redirect(url_for('list_platforms'))
+
+    if request.method == 'POST':
+        name = request.form['name']
+
+        updated_platform, message = PlatformService.update_platform(platform_id, name)
+
+        if updated_platform:
+            flash(message, 'success')
+            return redirect(url_for('list_platforms'))
+        else:
+            flash(message, 'danger')
+
+    return render_template('edit_platform.html', platform=platform)
+
+# end of platforms routes
+
 
 
 
