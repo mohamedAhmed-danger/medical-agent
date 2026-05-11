@@ -40,6 +40,7 @@
             class="form-control"
             value="{{ clinic.name }}"
             required autofocus
+            maxlength="100"
           >
         </div>
       </div>
@@ -52,6 +53,7 @@
             type="text" id="address" name="address"
             class="form-control"
             value="{{ clinic.address or '' }}"
+            maxlength="200"
           >
         </div>
       </div>
@@ -62,6 +64,7 @@
           id="info" name="info"
           class="form-control"
           rows="3"
+          maxlength="200"
         >{{ clinic.info or '' }}</textarea>
         <span class="form-hint">اختياري — أي تفاصيل مفيدة عن العيادة.</span>
       </div>

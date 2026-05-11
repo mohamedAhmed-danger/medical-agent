@@ -39,6 +39,7 @@
             type="text" id="name" name="name"
             class="form-control"
             placeholder="أدخل اسم المستخدم"
+            maxlength="60"
             value="{{ user.username }}"
             required autofocus
           >
@@ -53,6 +54,7 @@
           <input
             type="password" id="password" name="password"
             class="form-control"
+            maxlength="60"
             placeholder="اتركها فارغة إن لم تريد تغييرها"
           >
           <button type="button" id="togglePwd"

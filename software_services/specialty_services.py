@@ -5,17 +5,20 @@ class SpecialtyService:
     # this function is used to create a new specialty in the database
     @staticmethod
     def create_specialty(name,details,clinic_id):
-        new_specialty = Specialty(
+    
+        try:
+          new_specialty = Specialty(
             name=name,
             details=details,
             clinic_id=clinic_id
-        )
+          )
 
-        db.session.add(new_specialty)
-        db.session.commit()
-
-        return new_specialty, "تم إنشاء التخصص بنجاح"
-
+          db.session.add(new_specialty)
+          db.session.commit()
+          return new_specialty, "تم إنشاء التخصص بنجاح"
+        except Exception as e:
+          db.session.rollback() 
+        return None, f"حدث خطأ أثناء إنشاء التخصص: {str(e)}"
 
     # this function is to get a specialty by id
     @staticmethod
@@ -34,19 +37,26 @@ class SpecialtyService:
         return specialties, "تم العثور على جميع التخصصات" 
 
     # this function is used to update a specialty by id
+    
     @staticmethod
     def update_specialty(specialty_id, name=None, details=None):
         specialty = Specialty.query.get(specialty_id)
-
         if not specialty:
             return None, "التخصص غير موجود"
 
-        if name is not None:
+        if name:
+            # نتأكد إن الاسم الجديد مش مستخدم في نفس عيادة التخصص ده
+            existing = Specialty.query.filter_by(name=name, clinic_id=specialty.clinic_id).first()
+            if existing and existing.id != specialty.id:
+                return None, "يوجد تخصص آخر بنفس هذا الاسم في العيادة"
             specialty.name = name
 
         if details is not None:
             specialty.details = details
 
-        db.session.commit()
-
-        return specialty, "تم تحديث التخصص بنجاح"               
+        try:
+            db.session.commit()
+            return specialty, "تم تحديث التخصص بنجاح"
+        except Exception as e:
+            db.session.rollback()
+            return None, "فشل تحديث البيانات"              

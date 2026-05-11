@@ -5,6 +5,7 @@ from software_services.User_services import UserService
 from software_services.clinic_services import ClinicService 
 from software_services.doctor_services import DoctorService  
 from software_services.specialty_services import SpecialtyService
+from software_services.service_services import ServiceService
 from models.models import db, User
 
 
@@ -275,6 +276,78 @@ def edit_specialty(specialty_id):
             flash(message, 'danger')
 
     return render_template('edit_specialty.html', specialty=specialty)    
+
+
+
+
+# end of specialty routes
+# services routes
+# this route is used to display all services
+@app.route('/services')
+@login_required
+def list_services():
+    services, message = ServiceService.get_all_services()
+    return render_template('services.html', services=services)
+
+# this route is used to create a new service and save it in the database
+@app.route('/services/new', methods=['GET', 'POST'])
+@login_required
+def create_service():
+    clinics, _ = ClinicService.get_all_clinics()
+
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form['description']
+        price = request.form['price']
+        clinic_id = request.form['clinic_id']
+
+        service, message = ServiceService.create_service(
+            name,
+            description,
+            clinic_id,
+            price
+        )
+
+        if service:
+            flash(message, 'success')
+            return redirect(url_for('list_services'))
+        else:
+            flash(message, 'danger')
+
+    return render_template(
+        'create_service.html',
+        clinics=clinics
+    )
+
+# this route is used to edit a service by id and update it in the database
+@app.route('/services/<int:service_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_service(service_id):
+    service, message = ServiceService.get_service_by_id(service_id)
+
+    if not service:
+        flash(message, 'danger')
+        return redirect(url_for('list_services'))
+
+    if request.method == 'POST':
+        name = request.form['name']
+        description = request.form['description']
+        price = request.form['price']
+
+        updated_service, message = ServiceService.update_service(service_id, name, description, price)
+
+        if updated_service:
+            flash(message, 'success')
+            return redirect(url_for('list_services'))
+        else:
+            flash(message, 'danger')
+
+    return render_template('edit_service.html', service=service)
+
+# end of services routes
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
