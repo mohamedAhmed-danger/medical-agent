@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}الشكاوى{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">الشكاوى</h1>
+    <p class="page-subtitle">الشكاوى غير المحلولة</p>
+  </div>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>رقم الهاتف</th>
+        <th>الشكوى</th>
+        <th>تاريخ الإنشاء</th>
+        <th>الإجراءات</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for complaint in complaints %}
+      <tr>
+        <td>{{ complaint.phone_number }}</td>
+        <td>{{ complaint.complaint_text }}</td>
+        <td>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>
+          <a href="{{ url_for('complaint_details', complaint_id=complaint.id) }}" class="btn btn-ghost">
+            عرض التفاصيل
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4">لا توجد شكاوى</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
