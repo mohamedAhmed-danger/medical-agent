@@ -1,8 +1,11 @@
+import datetime
+
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_migrate import Migrate
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from software_services.User_services import UserService
 from software_services.clinic_services import ClinicService 
+from software_services.complaine_services import ComplaintService
 from software_services.doctor_services import DoctorService  
 from software_services.specialty_services import SpecialtyService
 from software_services.service_services import ServiceService
@@ -477,6 +480,42 @@ def toggle_booking_received(booking_id):
         flash(message, 'danger')
 
     return redirect(url_for('list_bookings'))
+
+# end of bookings routes
+
+# complaints routes
+
+# this route is to display the complaints is not resolved
+@app.route('/complaints')
+@login_required
+def list_complaints():
+    complaints, message = ComplaintService.get_unresolved_complaints()
+    return render_template('complaints.html', complaints=complaints)
+
+
+# this route is to display the complaint details
+@app.route('/complaints/<int:complaint_id>', methods=['GET', 'POST'])
+@login_required
+def complaint_details(complaint_id):
+
+    complaint, message = ComplaintService.get_complaint_details(complaint_id)
+
+    if request.method == 'POST':
+
+        is_resolved = request.form.get('is_resolved') == 'on'
+
+        success, message = ComplaintService.update_complaint_status(
+            complaint_id,
+            is_resolved
+        )
+
+        return redirect(url_for('list_complaints'))
+
+    return render_template(
+        'complaint_details.html',
+        complaint=complaint
+    )
+
 
 if __name__ == '__main__':
     app.run(debug=True)

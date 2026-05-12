@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}النظام الطبي{% endblock %} — Ibyco</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <title>{% block title %}النظام الطبي{% endblock %} — Gharbia Clinic</title>  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -19,9 +18,9 @@
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
-    <div class="brand-icon">&#9889;</div>
-    <span class="brand-name">Iby<span>co</span></span>
-  </div>
+  <img src="{{ url_for('static', filename='images/logo.png') }}" 
+       alt="Gharbia Clinic" 
+       style="width:100%; max-width:160px; height:auto; object-fit:contain; display:block; margin:0 auto;">  </div>
   <div class="nav-section">
     <p class="nav-section-label">&#1575;&#1604;&#1585;&#1574;&#1610;&#1587;&#1610;&#1577;</p>
     <a href="{{ url_for('users') }}" class="nav-item">
@@ -56,6 +55,10 @@
 <a href="{{ url_for('list_bookings') }}" class="nav-item">
   <i data-lucide="calendar-check" class="nav-icon"></i>
   الحجوزات
+</a>
+<a href="{{ url_for('list_complaints') }}" class="nav-item">
+  <i data-lucide="message-square-warning" class="nav-icon"></i>
+  الشكاوى
 </a>
   </div>
   <div class="sidebar-footer">

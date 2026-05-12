@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}تفاصيل الشكوى{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">تفاصيل الشكوى</h1>
+    <p class="page-subtitle">رقم الهاتف: {{ complaint.phone_number }}</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="form-grid">
+
+    <div class="form-group full-width">
+      <label>رقم الهاتف</label>
+      <input type="text" class="form-control" value="{{ complaint.phone_number }}" disabled>
+    </div>
+
+    <div class="form-group full-width">
+      <label>نص الشكوى</label>
+      <textarea class="form-control" rows="4" disabled>{{ complaint.complaint_text }}</textarea>
+    </div>
+
+    <div class="form-group full-width">
+      <label>تاريخ الإنشاء</label>
+      <input type="text" class="form-control" value="{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}" disabled>
+    </div>
+
+    <div class="form-group full-width">
+      <label>الحالة</label>
+      <input type="text" class="form-control" value="{{ 'محلولة' if complaint.is_resolved else 'غير محلولة' }}" disabled>
+    </div>
+
+    {% if complaint.resolved_at %}
+    <div class="form-group full-width">
+      <label>تاريخ الحل</label>
+      <input type="text" class="form-control" value="{{ complaint.resolved_at.strftime('%Y-%m-%d %H:%M') }}" disabled>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <form action="{{ url_for('complaint_details', complaint_id=complaint.id) }}" method="POST">
+    <div class="form-actions">
+      {% if not complaint.is_resolved %}
+      <button type="submit" name="is_resolved" value="on" class="btn btn-primary">
+        تم الحل ✓
+      </button>
+      {% else %}
+      <button type="submit" class="btn btn-ghost">
+        إلغاء الحل
+      </button>
+      {% endif %}
+      <a href="{{ url_for('list_complaints') }}" class="btn btn-ghost">رجوع</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

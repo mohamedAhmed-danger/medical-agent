@@ -2,4 +2,3 @@ flask
 flask_sqlalchemy
 flask_migrate
 flask_login
-timezone
