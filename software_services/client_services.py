@@ -1,3 +1,5 @@
+from sqlite3 import IntegrityError
+
 from models.models import Client, db
 
 class ClientService:
@@ -34,3 +36,27 @@ class ClientService:
             client.summary=summary
          db.session.commit()
          return client, "تم تحديث بيانات العميل بنجاح"
+    
+    # this function is used to get a client with sender_id and platform_id and page_id
+    @staticmethod
+    def get_client(sender_id, platform_id,page_id):
+        client = Client.query.filter_by(sender_id=sender_id, platform_id=platform_id,page_id=page_id).first()
+        if not client:
+            return None, "العميل غير موجود"
+        return client, "تم العثور على العميل بنجاح"
+    @staticmethod
+    def _get_or_create_client(sender_id, page_id, platform_id) -> Client:
+     client = Client.query.filter_by(
+        sender_id=sender_id, page_id=page_id, platform_id=platform_id
+     ).first()
+     if not client:
+         try:
+             client = Client(sender_id=sender_id, page_id=page_id, platform_id=platform_id)
+             db.session.add(client)
+             db.session.commit()
+         except IntegrityError:
+              db.session.rollback()
+              client = Client.query.filter_by(
+                 sender_id=sender_id, page_id=page_id, platform_id=platform_id
+             ).first()
+     return client

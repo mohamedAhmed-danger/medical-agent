@@ -48,7 +48,22 @@ class ComplaintService:
         db.session.commit()
         return Complaint.id
     
+    from models.models import db, Complaint
 
+
+    def save_complaint(phone: str, complaint: str) -> str:
+       """Save complaint to DB and return confirmation message."""
+       record = Complaint(
+        phone_number=phone,
+        complaint_text=complaint,
+        is_resolved=False,
+        created_at=datetime.now(timezone.utc)
+      )
+       db.session.add(record)
+       db.session.commit()
+
+       return "تم تسجيل شكواك بنجاح ✅\nسيتم التواصل معك في أقرب وقت."
+ 
 
     # this for resolve complaint by id
     @staticmethod

@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from software_services.User_services import UserService
 from software_services.clinic_services import ClinicService 
-from software_services.complaine_services import ComplaintService
+from software_services.complaint_services import ComplaintService
 from software_services.doctor_services import DoctorService  
 from software_services.specialty_services import SpecialtyService
 from software_services.service_services import ServiceService
@@ -13,7 +13,10 @@ from software_services.platform_services import PlatformService
 from software_services.page_services import PageService
 from software_services.booking_services import BookingService
 from models.models import db, User
-
+from flask import request, abort
+from models.models import Page
+from parsers.facebook import parse_facebook_message
+from platfroms.facebook_handler import FacebookHandler
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///medical_agent.db'
@@ -516,6 +519,34 @@ def complaint_details(complaint_id):
         complaint=complaint
     )
 
+VERIFY_TOKEN = "dangerMo"
+@app.route("/webhook/facebook", methods=["GET", "POST"])
+def fb_webhook():
+    if request.method == "GET":
+        if request.args.get("hub.verify_token") == VERIFY_TOKEN:
+            return request.args.get("hub.challenge", "")
+        abort(403)
+
+    try:
+        payload = request.json
+        page_id = payload["entry"][0]["id"]
+        page    = Page.query.filter_by(page_id=page_id).first()
+        if not page:
+            return "page not found", 404
+
+        handler = FacebookHandler(page)
+        message = parse_facebook_message(payload, page.page_id, handler.platform_id)
+
+        if message:
+            reply = handler.handle(message)
+            if reply:
+                handler.send(message.sender_id, reply)
+
+    except Exception as e:
+        import traceback
+        print("WEBHOOK ERROR:", traceback.format_exc())  # ← هيطبع الـ error كامل
+
+    return "OK", 200
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -51,3 +51,23 @@ class BookingService:
         except Exception as e:
             db.session.rollback()
             return None, f"حدث خطأ: {str(e)}"
+    @staticmethod    
+    def save_booking(name: str, phone: str, date: str, details: str, comes_from: str) -> str:
+   
+     booking = Booking(
+         name=name,
+         phone_number=phone,
+         date=date,
+         details=details,
+         comes_from=comes_from,
+     )
+     db.session.add(booking)
+     db.session.commit()
+ 
+     return (
+        f"تم حجز موعدك بنجاح ✅\n"
+        f"الاسم: {name}\n"
+        f"التاريخ: {date}\n"
+        f"سيتم التواصل معك على {phone}"
+        
+     )    
