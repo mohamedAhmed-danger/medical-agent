@@ -1,4 +1,4 @@
-# graph/nodes/clinic_info_node.py
+# graph/nodes/direct_node.py
 
 import re
 from graph.state import AgentState
@@ -9,24 +9,21 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from software_services.client_services import ClientService
 
 
-CLINIC_INFO_SYSTEM_PROMPT = """
-You are a helpful assistant for a medical clinic.
+DIRECT_SYSTEM_PROMPT = """
+You are a friendly assistant for a medical clinic.
 Reply in the same language the user wrote in.
 
 ====================
-CLINIC DATA
+CLINIC INFO
 ====================
-Clinic:      {clinic}
-Doctors:     {doctors}
-Specialties: {specialties}
-Services:    {services}
+{clinic}
 
 ====================
 BEHAVIOR
 ====================
-- Answer the patient's question clearly and concisely using the clinic data above.
-- Never invent information not present in the data.
-- If something is not in the data, politely say you don't have that information.
+- Respond warmly to greetings, goodbyes, and simple conversational messages.
+- Keep answers short and friendly.
+- Do not handle booking or complaint requests — just acknowledge and redirect politely.
 
 ====================
 MANDATORY TAGS  ← include at the END of EVERY reply
@@ -38,18 +35,14 @@ MANDATORY TAGS  ← include at the END of EVERY reply
 
 <SUMMARY>
 [Cumulative conversation summary. Rules:
-  1. Copy the previous summary, then update only what changed.
-  2. Always use this structure:
-     - User Info  : name, phone, any personal details
-     - Intent     : what the patient wants to know
-     - Key Points : questions asked and answers given
-     - Status     : what just happened + what is still pending
-  3. Write in English regardless of conversation language.]
+  1. Update the summary after every patient message, including this one.
+  2. Include any information that might be relevant to future interactions, such as the patient's feelings, needs, or preferences.
+  3. Do NOT remove any previously added information like patient name or contact details or medical history from the summary — only add new details]
 </SUMMARY>
 """
 
 
-def clinic_info_node(state: AgentState) -> dict:
+def direct_node(state: AgentState) -> dict:
 
     # FIX 2: safe .get() access for Optional fields
     page_id          = state.get("page_id")
@@ -59,16 +52,10 @@ def clinic_info_node(state: AgentState) -> dict:
     current_summary  = state.get("summary") or ""
     last_bot_message = state.get("last_bot_message") or ""
 
-    clinic                         = ClinicDataService.get_clinic_info(page_id)
-    doctors, specialties, services = ClinicDataService.get_all_clinic_data(page_id)
+    clinic = ClinicDataService.get_clinic_info(page_id)
 
     system_content = (
-        CLINIC_INFO_SYSTEM_PROMPT.format(
-            clinic=clinic,
-            doctors=doctors,
-            specialties=specialties,
-            services=services,
-        )
+        DIRECT_SYSTEM_PROMPT.format(clinic=clinic)
         + f"\n\n====================\nCONVERSATION CONTEXT\n===================="
         + f"\nPrevious summary:\n{current_summary}"
         + f"\n\nLast bot message:\n{last_bot_message}"
@@ -83,7 +70,7 @@ def clinic_info_node(state: AgentState) -> dict:
             HumanMessage(content=user_message),
         ])
     except Exception as e:
-        print(f"[Clinic Info Node] LLM error: {e}")
+        print(f"[Direct Node] LLM error: {e}")
         # FIX 3: language-aware fallback
         fallback = detect_language_fallback(
             user_message,
@@ -91,10 +78,10 @@ def clinic_info_node(state: AgentState) -> dict:
             default="Sorry, I'm having trouble right now. Please try again in a moment.",
         )
         return {
-            "response":          fallback,
-            "summary":           current_summary,
-            "last_bot_message":  fallback,
-            "clinic_info_usage": None,
+            "response":         fallback,
+            "summary":          current_summary,
+            "last_bot_message": fallback,
+            "direct_usage":     None,
         }
 
     raw = response.content or ""
@@ -105,19 +92,17 @@ def clinic_info_node(state: AgentState) -> dict:
     if reply_match:
         clean_reply = strip_tags(reply_match.group(1).strip())
     else:
-        print("[Clinic Info Node] WARNING: <LAST_BOT_MESSAGE> tag missing in LLM response")
+        print("[Direct Node] WARNING: <LAST_BOT_MESSAGE> tag missing in LLM response")
         clean_reply = strip_tags(raw.strip())
 
-    summary_match = re.search(
-        r"<SUMMARY>(.*?)</SUMMARY>", raw, re.DOTALL
-    )
+    summary_match = re.search(r"<SUMMARY>(.*?)</SUMMARY>", raw, re.DOTALL)
     if not summary_match:
-        print("[Clinic Info Node] WARNING: <SUMMARY> tag missing in LLM response")
+        print("[Direct Node] WARNING: <SUMMARY> tag missing in LLM response")
     new_summary = summary_match.group(1).strip() if summary_match else current_summary
 
     # FIX 1: correct Gemini usage field names (singular token, not tokens)
     usage = getattr(response, "usage_metadata", None)
-    clinic_info_usage = (
+    direct_usage = (
         {
             "input_tokens":  usage.get("input_tokens",  0),
             "output_tokens": usage.get("output_tokens", 0),
@@ -136,13 +121,13 @@ def clinic_info_node(state: AgentState) -> dict:
             last_bot_message=clean_reply,
         )
     except Exception as e:
-        print(f"[Clinic Info Node] ClientService persist error: {e}")
+        print(f"[Direct Node] ClientService persist error: {e}")
 
-    print(f"[Clinic Info Node] done | usage={clinic_info_usage}")
+    print(f"[Direct Node] done | usage={direct_usage}")
 
     return {
-        "response":          clean_reply,
-        "summary":           new_summary,
-        "last_bot_message":  clean_reply,
-        "clinic_info_usage": clinic_info_usage,
+        "response":         clean_reply,
+        "summary":          new_summary,
+        "last_bot_message": clean_reply,
+        "direct_usage":     direct_usage,
     }
