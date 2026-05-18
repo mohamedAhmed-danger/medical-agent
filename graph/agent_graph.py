@@ -1,8 +1,9 @@
 from graph.nodes.booking_node import booking_node
 from graph.nodes.clinic_Info_node import clinic_info_node
 from graph.nodes.complaint_node import complaint_node
-from graph.nodes.dirct_node import dirct_node
+from graph.nodes.direct_node import direct_node
 from graph.nodes.intent_node import intent_node
+from graph.nodes.examination_node import examination_node
 from graph.state import AgentState
 from langgraph.graph import StateGraph, END
 
@@ -22,7 +23,8 @@ def build_graph() -> StateGraph:
     graph.add_node("booking",booking_node)
     graph.add_node("clinic_info",clinic_info_node)
     graph.add_node("complaint",complaint_node)
-    graph.add_node("direct",dirct_node)
+    graph.add_node("direct",direct_node)
+    graph.add_node("examination", examination_node)
     # entry point
     graph.set_entry_point("intent")
     
@@ -34,7 +36,8 @@ def build_graph() -> StateGraph:
             "booking": "booking",
             "clinic_info": "clinic_info",
             "complaint": "complaint",
-            "direct": "direct"
+            "direct": "direct",
+            "examination": "examination",
         }     
 
    )
@@ -43,6 +46,7 @@ def build_graph() -> StateGraph:
     graph.add_edge("clinic_info",END)
     graph.add_edge("complaint",END)
     graph.add_edge("direct",END)
+    graph.add_edge("examination",END)
 
     return graph.compile() 
 

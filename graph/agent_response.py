@@ -13,13 +13,13 @@ class AgentResponse:
 
     @staticmethod
     def from_result(result: dict) -> "AgentResponse":
-        # اجمع كل الـ usage في dict واحد
+
         usage = {
             "intent":      result.get("intent_usage")      or {},
             "clinic_info": result.get("clinic_info_usage") or {},
             "booking":     result.get("booking_usage")     or {},
             "complaint":   result.get("complaint_usage")   or {},
-            "direct":      result.get("dirct_usage")       or {},
+            "direct":      result.get("direct_usage")       or {},
         }
 
         return AgentResponse(

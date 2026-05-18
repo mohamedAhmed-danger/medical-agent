@@ -1,98 +1,85 @@
-from models.models import Complaint ,db
+# FIX #8: Removed stray import from inside the class body — all imports at top
+from models.models import Complaint, db
 from datetime import datetime, timezone
 
 
 class ComplaintService:
-    # this for get all complaints   
+
     @staticmethod
     def get_all_complaints():
-        return(
-            Complaint.query.orderby(Complaint.created_at.desc()).all()
-        )
-    
+        return Complaint.query.order_by(Complaint.created_at.desc()).all()
 
-
-    # This for get complaint by id
     @staticmethod
     def get_complaint_by_id(complaint_id):
-        return Complaint.query.get(complaint_id)
-    
-    # This for get all unresolved complaints
-    @staticmethod
-    def get_unresolved_complaints(): 
-        complaints = Complaint.query.filter_by(
-        is_resolved=False
-         ).order_by(
-        Complaint.created_at.desc()
-        ).all()
+        return db.session.get(Complaint, complaint_id)
 
+    @staticmethod
+    def get_unresolved_complaints():
+        complaints = (
+            Complaint.query
+            .filter_by(is_resolved=False)
+            .order_by(Complaint.created_at.desc())
+            .all()
+        )
         return complaints, "تم العثور على الشكاوى"
-  
-    # this for display the complaint details
+
     @staticmethod
     def get_complaint_details(complaint_id):
-        complaint = Complaint.query.get(complaint_id)
+        complaint = db.session.get(Complaint, complaint_id)
         if not complaint:
-            return None , "الشكوى غير موجودة"
-        
-        return complaint , "تم العثور على الشكوى بنجاح"
+            return None, "الشكوى غير موجودة"
+        return complaint, "تم العثور على الشكوى بنجاح"
 
-    # This for create new complaint for agent
     @staticmethod
-    def create_complaint(message,phone_number):
+    def create_complaint(message, phone_number, comes_from="unknown"):
+
         new_complaint = Complaint(
             phone_number=phone_number,
-            complaint_text=message
+            complaint_text=message,
+            comes_from=comes_from
         )
         db.session.add(new_complaint)
         db.session.commit()
-        return Complaint.id
-    
-    from models.models import db, Complaint
+        return new_complaint.id      
 
-
-    def save_complaint(phone: str, complaint: str) -> str:
-       """Save complaint to DB and return confirmation message."""
-       record = Complaint(
-        phone_number=phone,
-        complaint_text=complaint,
-        is_resolved=False,
-        created_at=datetime.now(timezone.utc)
-      )
-       db.session.add(record)
-       db.session.commit()
-
-       return "تم تسجيل شكواك بنجاح ✅\nسيتم التواصل معك في أقرب وقت."
- 
-
-    # this for resolve complaint by id
     @staticmethod
     def resolve_complaint(complaint_id):
-        complaint = Complaint.query.get(complaint_id)
+        complaint = db.session.get(Complaint, complaint_id)
         if not complaint:
-            return False , "الشكوى غير موجودة"
-        
+            return False, "الشكوى غير موجودة"
         complaint.is_resolved = True
         complaint.resolved_at = datetime.now(timezone.utc)
         db.session.commit()
-        return True , "تم حل الشكوى بنجاح"
-    
+        return True, "تم حل الشكوى بنجاح"
 
-    # this for update complaint status by id  
     @staticmethod
     def update_complaint_status(complaint_id, is_resolved):
-        complaint = Complaint.query.get(complaint_id)
-
+        complaint = db.session.get(Complaint, complaint_id)
         if not complaint:
             return False, "الشكوى غير موجودة"
-
         complaint.is_resolved = is_resolved
-
-        if is_resolved:
-            complaint.resolved_at = datetime.now(timezone.utc)
-        else:
-            complaint.resolved_at = None
-
+        complaint.resolved_at = datetime.now(timezone.utc) if is_resolved else None
         db.session.commit()
-
         return True, "تم تحديث حالة الشكوى"
+
+   
+    @staticmethod
+    def save_complaint(phone_number: str, complaint_text: str, comes_from: str = "unknown") -> str:
+        try:
+            complaint = Complaint(
+                phone_number=phone_number,
+                complaint_text=complaint_text,
+                is_resolved=False,
+                created_at=datetime.now(timezone.utc),
+                comes_from=comes_from,
+            )
+            db.session.add(complaint)
+            db.session.commit()
+            return (
+                f"تم تسجيل شكواك بنجاح ✅\n"
+                f"رقم هاتفك: {phone_number}\n"
+                f"سيتواصل معك فريقنا في أقرب وقت ممكن."
+            )
+        except Exception as e:
+            db.session.rollback()
+            return f"حدث خطأ أثناء حفظ الشكوى: {str(e)}"

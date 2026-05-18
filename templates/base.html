@@ -3,12 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}النظام الطبي{% endblock %} — Gharbia Clinic</title>  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <title>{% block title %}النظام الطبي{% endblock %} — Gharbia Clinic</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   {% block head %}{% endblock %}
 </head>
+ <!-- Footer -->
+  <div style="
+    background: #3d3b6e;
+    color: #fff;
+    text-align: center;
+    padding: 16px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.95rem;
+  ">
+    Developed by 
+    <a href="https://revyai.tech" target="_blank" style="
+      color: #38bdf8;
+      font-weight: 700;
+      text-decoration: none;
+      border: 1px solid #38bdf8;
+      padding: 2px 8px;
+      border-radius: 4px;
+    ">RevyAI</a>
+    <br>
+    Contact us on WhatsApp: 
+    <a href="https://wa.me/201554019172" target="_blank" style="
+      color: #38bdf8;
+      font-weight: 600;
+      text-decoration: none;
+    ">+20 15 54019172</a>
+  </div>
 <body>
 
 <button class="sidebar-toggle" id="sidebarToggle" aria-label="toggle">
@@ -18,55 +45,61 @@
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
-  <img src="{{ url_for('static', filename='images/logo.png') }}" 
-       alt="Gharbia Clinic" 
-       style="width:100%; max-width:160px; height:auto; object-fit:contain; display:block; margin:0 auto;">  </div>
+    <img src="{{ url_for('static', filename='images/logo.png') }}"
+         alt="Gharbia Clinic"
+         style="width:100%; max-width:160px; height:auto; object-fit:contain; display:block; margin:0 auto;">
+  </div>
   <div class="nav-section">
-    <p class="nav-section-label">&#1575;&#1604;&#1585;&#1574;&#1610;&#1587;&#1610;&#1577;</p>
+    <p class="nav-section-label">الرئيسية</p>
     <a href="{{ url_for('users') }}" class="nav-item">
       <i data-lucide="users" class="nav-icon"></i>
-      &#1575;&#1604;&#1605;&#1587;&#1578;&#1582;&#1583;&#1605;&#1608;&#1606;
-    </a>
-    <a href="{{ url_for('list_clinics') }}" class="nav-item">
-      <i data-lucide="building-2" class="nav-icon"></i>
-      &#1575;&#1604;&#1593;&#1610;&#1575;&#1583;&#1575;&#1578;
+      المستخدمون
     </a>
 
+    
+    <a href="{{ url_for('list_clinics') }}" class="nav-item">
+      <i data-lucide="building-2" class="nav-icon"></i>
+      العيادات
+    </a>
     <a href="{{ url_for('list_doctors') }}" class="nav-item">
-    <i data-lucide="stethoscope" class="nav-icon"></i>
-    الأطباء
-</a>
-<a href="{{ url_for('list_specialties') }}" class="nav-item">
-  <i data-lucide="briefcase-medical" class="nav-icon"></i>
-  التخصصات
-</a>
-<a href="{{ url_for('list_services') }}" class="nav-item">
-  <i data-lucide="clipboard-list" class="nav-icon"></i>
-  الخدمات
-</a>
-<a href="{{ url_for('list_platforms') }}" class="nav-item">
-  <i data-lucide="monitor-smartphone" class="nav-icon"></i>
-  المنصات
-</a>
-<a href="{{ url_for('list_pages') }}" class="nav-item">
-  <i data-lucide="layout" class="nav-icon"></i>
-  الصفحات
-</a>
-<a href="{{ url_for('list_bookings') }}" class="nav-item">
-  <i data-lucide="calendar-check" class="nav-icon"></i>
-  الحجوزات
-</a>
-<a href="{{ url_for('list_complaints') }}" class="nav-item">
-  <i data-lucide="message-square-warning" class="nav-icon"></i>
-  الشكاوى
-</a>
+      <i data-lucide="stethoscope" class="nav-icon"></i>
+      الأطباء
+    </a>
+    <a href="{{ url_for('list_specialties') }}" class="nav-item">
+      <i data-lucide="briefcase-medical" class="nav-icon"></i>
+      التخصصات
+    </a>
+    <a href="{{ url_for('list_services') }}" class="nav-item">
+      <i data-lucide="clipboard-list" class="nav-icon"></i>
+      الخدمات
+    </a>
+    <a href="{{ url_for('list_platforms') }}" class="nav-item">
+      <i data-lucide="monitor-smartphone" class="nav-icon"></i>
+      المنصات
+    </a>
+    <a href="{{ url_for('list_pages') }}" class="nav-item">
+      <i data-lucide="layout" class="nav-icon"></i>
+      الصفحات
+    </a>
+    <a href="{{ url_for('list_bookings') }}" class="nav-item">
+      <i data-lucide="calendar-check" class="nav-icon"></i>
+      الحجوزات
+    </a>
+    <a href="{{ url_for('list_complaints') }}" class="nav-item">
+      <i data-lucide="message-square-warning" class="nav-icon"></i>
+      الشكاوى
+    </a>
+    <a href="{{ url_for('list_examinations') }}" class="nav-item">
+      <i data-lucide="clipboard-plus" class="nav-icon"></i>
+      الفحوصات
+    </a>
   </div>
   <div class="sidebar-footer">
     <div class="sidebar-user">
       <div class="avatar">{{ current_user.username[0]|upper }}</div>
       <div class="user-info">
         <div class="user-name">{{ current_user.username }}</div>
-        <div class="user-role">&#1605;&#1587;&#1578;&#1582;&#1583;&#1605;</div>
+        <div class="user-role">مستخدم</div>
       </div>
       <a href="{{ url_for('logout') }}" class="logout-btn">
         <i data-lucide="log-out" style="width:16px;height:16px"></i>
@@ -74,6 +107,8 @@
     </div>
   </div>
 </aside>
+
+
 
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
@@ -88,6 +123,66 @@
   {% endif %}
 {% endwith %}
 
+<!-- Custom Delete Modal -->
+<div id="deleteModal" style="
+  display:none; position:fixed; inset:0; z-index:9999;
+  background:rgba(0,0,0,0.45); align-items:center; justify-content:center;
+">
+  <div style="
+    background:#fff; border-radius:16px; padding:36px 32px;
+    max-width:400px; width:90%; text-align:center;
+    box-shadow:0 24px 64px rgba(0,0,0,0.18);
+    animation: modalIn .2s ease;
+  ">
+    <div style="
+      width:60px; height:60px; border-radius:50%;
+      background:#fee2e2; display:flex; align-items:center;
+      justify-content:center; margin:0 auto 20px;
+    ">
+      <i data-lucide="trash-2" style="color:#ef4444; width:26px; height:26px;"></i>
+    </div>
+
+    <h3 style="margin:0 0 8px; font-size:1.15rem; color:#111; font-family:'Cairo',sans-serif;">
+      تأكيد الحذف
+    </h3>
+    <p style="margin:0 0 28px; color:#6b7280; font-size:0.92rem; font-family:'Cairo',sans-serif;">
+      هل أنت متأكد من حذف هذا العنصر؟<br>لا يمكن التراجع عن هذا الإجراء.
+    </p>
+
+    <div style="display:flex; gap:12px; justify-content:center; flex-direction:row-reverse;">
+      <button onclick="closeDeleteModal()" style="
+        padding:10px 28px; border-radius:8px; border:1px solid #e5e7eb;
+        background:#fff; color:#374151; cursor:pointer;
+        font-size:0.92rem; font-family:'Cairo',sans-serif;
+        transition: background .15s;
+      "
+      onmouseover="this.style.background='#f9fafb'"
+      onmouseout="this.style.background='#fff'"
+      >
+        إلغاء
+      </button>
+      <button id="confirmDeleteBtn" style="
+        padding:10px 28px; border-radius:8px; border:none;
+        background:#ef4444; color:#fff; cursor:pointer;
+        font-size:0.92rem; font-family:'Cairo',sans-serif;
+        transition: background .15s;
+      "
+      onmouseover="this.style.background='#dc2626'"
+      onmouseout="this.style.background='#ef4444'"
+      >
+        حذف
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(8px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0);   }
+  }
+</style>
+
 <div class="main-wrapper">
   <main class="main-content">
     {% block content %}{% endblock %}
@@ -96,7 +191,31 @@
 
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 {% block scripts %}
-<script>lucide.createIcons();</script>
+<script>
+  lucide.createIcons();
+
+  let _pendingForm = null;
+
+  function confirmDelete(form) {
+    _pendingForm = form;
+    const modal = document.getElementById('deleteModal');
+    modal.style.display = 'flex';
+    lucide.createIcons();
+  }
+
+  function closeDeleteModal() {
+    _pendingForm = null;
+    document.getElementById('deleteModal').style.display = 'none';
+  }
+
+  document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+    if (_pendingForm) _pendingForm.submit();
+  });
+
+  document.getElementById('deleteModal').addEventListener('click', function (e) {
+    if (e.target === this) closeDeleteModal();
+  });
+</script>
 {% endblock %}
 
 </body>

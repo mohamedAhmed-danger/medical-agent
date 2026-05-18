@@ -5,52 +5,67 @@
 {% block content %}
 
 <div class="page-header">
-    <div>
-        <h1 class="page-title">الأطباء</h1>
-        <p class="page-subtitle">إدارة جميع الأطباء</p>
-    </div>
+  <div>
+    <h1 class="page-title">الأطباء</h1>
+    <p class="page-subtitle">إدارة جميع الأطباء</p>
+  </div>
 
-    <a href="{{ url_for('create_doctor') }}" class="btn btn-primary">
-        إضافة طبيب
-    </a>
+  <a href="{{ url_for('create_doctor') }}" class="btn btn-primary">
+    <i data-lucide="plus"></i>
+    إضافة طبيب
+  </a>
 </div>
 
 <div class="card">
 
-    <div class="toolbar">
-        <div class="search-box">
-            <input type="text" id="tableSearch" placeholder="بحث...">
-        </div>
+  <div class="toolbar">
+    <div class="search-box">
+      <i data-lucide="search" class="search-icon"></i>
+      <input type="text" id="tableSearch" placeholder="بحث...">
     </div>
+  </div>
 
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>الاسم</th>
-                    <th>المعلومات</th>
-                    <th>الإجراءات</th>
-                </tr>
-            </thead>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الاسم</th>
+          <th>المعلومات</th>
+          <th>الإجراءات</th>
+        </tr>
+      </thead>
 
-            <tbody>
-                {% for doctor in doctors %}
-                <tr>
-                    <td>{{ doctor.id }}</td>
-                    <td>{{ doctor.name }}</td>
-                    <td>{{ doctor.doctor_info }}</td>
-                    <td class="table-actions">
-                        <a href="{{ url_for('edit_doctor', doctor_id=doctor.id) }}"
-                           class="btn btn-ghost">
-                            تعديل
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+      <tbody>
+        {% for doctor in doctors %}
+        <tr>
+          <td>{{ doctor.id }}</td>
+          <td>{{ doctor.name }}</td>
+          <td>{{ doctor.doctor_info }}</td>
+
+          <td class="table-actions" style="direction: ltr;">
+
+            <a href="{{ url_for('edit_doctor', doctor_id=doctor.id) }}"
+               class="btn btn-ghost btn-icon">
+              <i data-lucide="pencil"></i>
+            </a>
+
+            <form action="{{ url_for('delete_doctor', doctor_id=doctor.id) }}"
+                  method="POST"
+                  style="display:inline"
+                  onsubmit="confirmDelete(this); return false;">
+              <button type="submit" class="btn btn-ghost btn-icon"
+                      style="color: var(--color-danger, #ef4444)">
+                <i data-lucide="trash-2"></i>
+              </button>
+            </form>
+
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
 </div>
 

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}الفحوصات{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">الفحوصات</h1>
+    <p class="page-subtitle">الفحوصات غير المراجعة</p>
+  </div>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>رقم الهاتف</th>
+        <th>الاستشارة</th>
+        <th>تاريخ الإنشاء</th>
+        <th>الإجراءات</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for examination in examinations %}
+      <tr>
+        <td>{{ examination.phone_number }}</td>
+        <td>{{ examination.symptom_text }}</td>
+        <td>{{ examination.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>
+          <a href="{{ url_for('examination_details', examination_id=examination.id) }}" class="btn btn-ghost">
+            عرض التفاصيل
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="4">لا توجد فحوصات</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

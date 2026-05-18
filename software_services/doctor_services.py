@@ -1,10 +1,16 @@
 from models.models import Doctor, db
 
+Max_doctors=20
+
 class DoctorService:
     # this function is used to create a new doctor in the database
     @staticmethod
     def create_doctor(name, doctor_info, clinic_id):
-      name=name.strip().lower
+      doctors_count = Doctor.query.filter_by(clinic_id=clinic_id).count()
+      if doctors_count >= Max_doctors:
+            return None, f"لقد وصلت للحد الأقصى من الأطباء ({Max_doctors} أطباء)"
+
+      name=name.strip().lower()
       existing_doctor = Doctor.query.filter_by(name=name, clinic_id=clinic_id).first()
       if existing_doctor:
           return None, "يوجد طبيب آخر بنفس هذا الاسم في العيادة"
@@ -62,3 +68,18 @@ class DoctorService:
         except Exception as e:
           db.session.rollback()
           return None, f"حدث خطأ أثناء تحديث الطبيب: {str(e)}"
+    # this function is used to delete a doctor by id
+    @staticmethod
+    def delete_doctor(doctor_id):
+        doctor = Doctor.query.get(doctor_id)
+
+        if not doctor:
+            return None, "الطبيب غير موجود"
+
+        try:
+          db.session.delete(doctor)
+          db.session.commit()
+          return doctor, "تم حذف الطبيب بنجاح"
+        except Exception as e:
+          db.session.rollback()
+          return None, f"حدث خطأ أثناء حذف الطبيب: {str(e)}"    

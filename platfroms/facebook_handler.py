@@ -1,19 +1,19 @@
+import logging
 import requests
 from platfroms.base_handler import BaseHandler
 
+logger = logging.getLogger(__name__)
+
 
 class FacebookHandler(BaseHandler):
-    platform_id = 2  # 1=whatsapp, 2=facebook
+    platform_id = 2  
 
-    # The human-readable name comes from the page's platform relationship.
-    # Assuming your Page model has:  page.platform.name  (e.g. "Facebook")
-    # If the column is named differently, adjust the property below.
     @property
     def platform_name(self) -> str:
         try:
-            return self.page.platform.name          # ← read from DB relation
+            return self.page.platform.name
         except AttributeError:
-            return "Facebook"                       # safe fallback
+            return "Facebook"
 
     API_VERSION = "v19.0"
 
@@ -24,7 +24,8 @@ class FacebookHandler(BaseHandler):
         self.params  = {"access_token": self.token}
 
     def send(self, recipient_id: str, text: str):
-        print(f"[FB SEND] to={recipient_id}, token={self.token[:20]}...")
+        logger.debug("[FB SEND] to=%s", recipient_id)
+
         if not text or not text.strip():
             return None
 
@@ -42,18 +43,18 @@ class FacebookHandler(BaseHandler):
                 timeout=10,
             )
             if response.status_code not in [200, 201]:
-                print(f"[FB ERROR] {response.text}")
+                logger.error("[FB ERROR] status=%s body=%s",
+                             response.status_code, response.text)
             return response
         except Exception as e:
-            print(f"[FB ERROR] Connection failed: {e}")
+            logger.error("[FB ERROR] Connection failed: %s", e)
             return None
 
     def parse_message(self, payload, page_id):
-        """Convenience wrapper — keeps platform_name in one place."""
         from parsers.facebook import parse_facebook_message
         return parse_facebook_message(
             payload,
             page_id,
             platform_id=self.platform_id,
-            platform_name=self.platform_name,   # ← injected here
+            platform_name=self.platform_name,
         )

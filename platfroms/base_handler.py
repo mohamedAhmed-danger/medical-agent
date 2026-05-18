@@ -22,7 +22,7 @@ class BaseHandler:
             "voice":    "برجاء إرسال رسالة نصية بدلاً من الرسالة الصوتية.",
             "location": "📍 تم استلام الموقع.",
         }
-        return responses.get(msg_type, "📎 تم استلام المرفق.")
+        return responses.get(msg_type, "برجاء إرسال رسالة نصية.")
 
     def send(self, recipient_id: str, text: str):
         raise NotImplementedError
