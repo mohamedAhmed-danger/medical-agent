@@ -1,6 +1,6 @@
 from models.models import Service, db
 
-Max_services=20
+Max_services=10
 
 class ServiceService:
     # this function is used to create a new service in db

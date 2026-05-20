@@ -1,6 +1,6 @@
 from models.models import Doctor, db
 
-Max_doctors=20
+Max_doctors=10
 
 class DoctorService:
     # this function is used to create a new doctor in the database

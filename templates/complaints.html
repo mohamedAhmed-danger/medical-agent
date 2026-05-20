@@ -16,6 +16,7 @@
         <th>رقم الهاتف</th>
         <th>الشكوى</th>
         <th>تاريخ الإنشاء</th>
+        <th>المنصة</th>
         <th>الإجراءات</th>
       </tr>
     </thead>
@@ -25,6 +26,7 @@
         <td>{{ complaint.phone_number }}</td>
         <td>{{ complaint.complaint_text }}</td>
         <td>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>{{ complaint.comefrom}}</td>
         <td>
           <a href="{{ url_for('complaint_details', complaint_id=complaint.id) }}" class="btn btn-ghost">
             عرض التفاصيل

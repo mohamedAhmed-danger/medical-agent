@@ -16,6 +16,7 @@
         <th>رقم الهاتف</th>
         <th>الاستشارة</th>
         <th>تاريخ الإنشاء</th>
+        <th>المنصة</th>
         <th>الإجراءات</th>
       </tr>
     </thead>
@@ -25,6 +26,7 @@
         <td>{{ examination.phone_number }}</td>
         <td>{{ examination.symptom_text }}</td>
         <td>{{ examination.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>{{ examination.comefrom }}</td>
         <td>
           <a href="{{ url_for('examination_details', examination_id=examination.id) }}" class="btn btn-ghost">
             عرض التفاصيل

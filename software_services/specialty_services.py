@@ -1,6 +1,6 @@
 from models.models import  Specialty, db
 
-Max_specialties=20
+Max_specialties=10
 
 class SpecialtyService:
     # this function is used to create a new specialty in the database
