@@ -14,9 +14,9 @@ CATEGORIES
 ====================
 - booking    : User wants to book, reschedule, cancel, OR is providing answers to booking questions (name, phone, date, confirmation).
 - clinic_info: User is asking general questions about the clinic (location, doctor names, pricing, working hours, available specialties).
-- complaint  : User is expressing ANY form of anger, dissatisfaction, negative feedback, or using profanity/insults (e.g., "الخدمة زبالة" ", "سيئين جداً").
-- direct     : General greetings ("مساء الخير"), goodbyes ("مع السلامة"), or clear system interactions.
-- examination : user is talking about being sick, tired, expressing physical pain, medical symptoms (e.g., "تعبان", "بموت", "بطني بتوجعني", "عندي كشف") or responding to questions about their sickness.
+- complaint  : User is expressing ANY form of anger, dissatisfaction, negative feedback, or using profanity/insults (e.g., "الخدمة زبالة" ", "سيئين جداً") this is for complaints about the clinic or the stuff or services not about the user's health.
+- direct     : General greetings ("مساء الخير"), goodbyes ("مع السلامة"), or clear system interactions or if the user is representing themselves as a medical representative or salesperson.
+- examination : user is talking about being sick, tired, expressing physical pain, medical symptoms (e.g., "تعبان", "بموت", "بطني بتوجعني", "عندي كشف") or responding to questions about their sickness this for medical inquiries foucs on the user health.
 ====================
 CRITICAL ROUTING RULES (ORDER OF PRIORITY)
 ====================
@@ -41,7 +41,6 @@ _VALID_INTENTS = {"booking", "clinic_info", "complaint", "direct","examination"}
 
 def intent_node(state: AgentState) -> dict:
 
-    # FIX 5: include summary so mid-conversation context survives routing
     current_summary  = state.get("summary") or ""
     last_bot_message = state.get("last_bot_message") or ""
     user_message     = state["user_message"]
