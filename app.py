@@ -1,5 +1,7 @@
+import os
 import datetime
 import threading
+import click
 
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_migrate import Migrate
@@ -23,17 +25,12 @@ from platfroms.facebook_handler import FacebookHandler
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///medical_agent.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your_secret_key_here'
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 
 login_manager = LoginManager(app)
 db.init_app(app)
 migrate = Migrate(app, db)
 
-# ─────────────────────────────────────
-# FIX #1: Deduplication cache to prevent
-# processing the same Facebook message twice
-# even if threads overlap on a retry.
-# ─────────────────────────────────────
 _seen_message_ids: set = set()
 _seen_lock = threading.Lock()
 
@@ -41,6 +38,20 @@ _seen_lock = threading.Lock()
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
+
+
+@app.cli.command("create-admin")
+@click.option("--username", prompt=True)
+@click.option("--password", prompt=True)
+def create_admin(username, password):
+    existing = User.query.filter_by(username=username).first()
+    if existing:
+        print("Admin already exists")
+        return
+    admin = User(username=username, password=password)
+    db.session.add(admin)
+    db.session.commit()
+    print("Admin created successfully")
 
 
 #  AUTH
@@ -223,7 +234,8 @@ def edit_doctor(doctor_id):
             flash(message, 'danger')
 
     return render_template('edit_doctor.html', doctor=doctor)
-# this route is used to delete a doctor by id
+
+
 @app.route('/doctors/<int:doctor_id>/delete', methods=['POST'])
 @login_required
 def delete_doctor(doctor_id):
@@ -235,6 +247,7 @@ def delete_doctor(doctor_id):
         flash(message, 'danger')
 
     return redirect(url_for('list_doctors'))
+
 
 #  SPECIALTIES
 
@@ -287,6 +300,7 @@ def edit_specialty(specialty_id):
             flash(message, 'danger')
 
     return render_template('edit_specialty.html', specialty=specialty)
+
 
 @app.route('/specialties/<int:specialty_id>/delete', methods=['POST'])
 @login_required
@@ -355,6 +369,7 @@ def edit_service(service_id):
             flash(message, 'danger')
 
     return render_template('edit_service.html', service=service)
+
 
 @app.route('/services/<int:service_id>/delete', methods=['POST'])
 @login_required
@@ -473,6 +488,7 @@ def edit_page(platform_id, page_id):
 
 
 #  BOOKINGS
+
 @app.route('/bookings')
 @login_required
 def list_bookings():
@@ -496,7 +512,9 @@ def toggle_booking_received(booking_id):
 
     return redirect(url_for('list_bookings'))
 
+
 #  COMPLAINTS
+
 @app.route('/complaints')
 @login_required
 def list_complaints():
@@ -504,15 +522,12 @@ def list_complaints():
     return render_template('complaints.html', complaints=complaints)
 
 
-
 @app.route('/complaints/<int:complaint_id>', methods=['GET', 'POST'])
 @login_required
 def complaint_details(complaint_id):
-
     complaint, message = ComplaintService.get_complaint_details(complaint_id)
 
     if request.method == 'POST':
-        
         is_resolved = request.form.get('is_resolved') == 'on'
         success, message = ComplaintService.update_complaint_status(complaint_id, is_resolved)
         return redirect(url_for('list_complaints'))
@@ -520,36 +535,33 @@ def complaint_details(complaint_id):
     return render_template('complaint_details.html', complaint=complaint)
 
 
+#  EXAMINATIONS
 
-# examination routes
 @app.route('/examinations')
 @login_required
 def list_examinations():
     examinations, message = ExaminationService.get_unreviewed_examination()
     return render_template('examinations.html', examinations=examinations) 
 
+
 @app.route('/examinations/<int:examination_id>', methods=['GET', 'POST'])
 @login_required
 def examination_details(examination_id):
-
     examination, message = ExaminationService.get_examination_details(examination_id)
 
     if request.method == 'POST':
-        
         is_reviewed = request.form.get('is_reviewed') == 'on'
         success, message = ExaminationService.update_examination_status(examination_id, is_reviewed)
         return redirect(url_for('list_examinations'))
 
     return render_template('examination_details.html', examination=examination)
-  
-
 
 
 # ─────────────────────────────────────
 # WEBHOOK
 # ─────────────────────────────────────
 
-VERIFY_TOKEN = "dangerMo"
+VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
 
 
 @app.route("/webhook/facebook", methods=["GET", "POST"])
@@ -560,7 +572,6 @@ def fb_webhook():
             return request.args.get("hub.challenge", "")
         abort(403)
 
-   
     try:
         payload = request.json or {}
         entries = payload.get("entry", [])
@@ -583,13 +594,14 @@ def fb_webhook():
 
                     for messaging in entry.get("messaging", []):
 
-                      
                         mid = messaging.get("message", {}).get("mid")
                         if mid:
                             with _seen_lock:
                                 if mid in _seen_message_ids:
                                     continue
                                 _seen_message_ids.add(mid)
+                                if len(_seen_message_ids) > 10_000:
+                                    _seen_message_ids.clear()
 
                         message = parse_facebook_message(
                             messaging=messaging,
@@ -616,4 +628,4 @@ def fb_webhook():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, use_reloader=False)
+    app.run()
