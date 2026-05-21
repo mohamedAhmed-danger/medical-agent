@@ -29,8 +29,10 @@ class ComplaintResponse(BaseModel):
     )
 
     summary: str = Field(
-        description="Updated cumulative conversation summary in English. Append new complaint facts at the end without clearing history."
-    )
+        description="An updated English summary. If previous complaints exist, do NOT append them as new text blocks. "
+            "Instead, merge them into a single status sentence (e.g., 'User previously filed 3 aggressive complaints, now expressing a new one regarding X'). "
+            "Keep the summary compact, continuous, and condensed."
+            )
 
     lead: ComplaintLead = Field(
         description="Structured complaint data ONLY."

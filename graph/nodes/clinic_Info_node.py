@@ -37,14 +37,11 @@ MANDATORY TAGS  ← include at the END of EVERY reply
 </LAST_BOT_MESSAGE>
 
 <SUMMARY>
-[Cumulative conversation summary. Rules:
-  1. Copy the previous summary, then update only what changed.
-  2. Always use this structure:
-     - User Info  : name, phone, any personal details
-     - Intent     : what the patient wants to know
-     - Key Points : questions asked and answers given
-     - Status     : what just happened + what is still pending
-  3. Write in English regardless of conversation language.]
+[Create an updated, highly condensed English report of the conversation state. 
+ Rules:
+  1. Do NOT build a chronological chat log or append raw text blocks.
+  2. Maintain a single unified snapshot of the patient profile: Name, Phone, and critical historical facts (e.g., 'User has a confirmed booking for X', 'User filed complaints previously').
+  3. When new facts emerge (like a new symptom or inquiry), rewrite the summary to incorporate them into a single, compact paragraph. Overwrite and clean up repetitive or redundant historical records.]
 </SUMMARY>
 """
 

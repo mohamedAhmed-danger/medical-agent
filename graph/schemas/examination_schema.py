@@ -23,8 +23,11 @@ class ExaminationResponse(BaseModel):
         description="Clean, empathetic, and professional reply to the patient. If ALL fields (phone_number and symptoms_text) are collected, ask the patient to CONFIRM saving their request for examination."
     )
     summary: str = Field(
-        description="Updated cumulative conversation summary in English. Append new medical/examination facts at the end without clearing history."
-    )
+        description="An updated English summary of the patient's medical context. "
+            "Incorporate new symptoms by condensing the medical history into a single sentence "
+            "(e.g., 'Patient has a booking history, previously reported back pain, and is now reporting testicular pain'). "
+            "Never append message logs; always re-summarize the total current state tightly.")
+    
     lead: ExaminationLead = Field(
         description="Structured examination data ONLY."
     )

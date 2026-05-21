@@ -26,7 +26,9 @@
         <td>{{ complaint.phone_number }}</td>
         <td>{{ complaint.complaint_text }}</td>
         <td>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-        <td>{{ complaint.comefrom}}</td>
+        <td>
+          {{ complaint.comes_from if complaint.comes_from else 'غير محدد' }}
+        </td>
         <td>
           <a href="{{ url_for('complaint_details', complaint_id=complaint.id) }}" class="btn btn-ghost">
             عرض التفاصيل
@@ -35,7 +37,8 @@
       </tr>
       {% else %}
       <tr>
-        <td colspan="4">لا توجد شكاوى</td>
+        {# تعديل الـ colspan لـ 5 عشان أبعاد الجدول تظبط #}
+        <td colspan="5" class="text-center">لا توجد شكاوى</td>
       </tr>
       {% endfor %}
     </tbody>

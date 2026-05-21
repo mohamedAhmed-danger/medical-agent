@@ -35,11 +35,12 @@ MANDATORY TAGS  ← include at the END of EVERY reply
 </LAST_BOT_MESSAGE>
 
 <SUMMARY>
-[Cumulative conversation summary. Rules:
-  1. Update the summary after every patient message, including this one.
-  2. Include any information that might be relevant to future interactions, such as the patient's feelings, needs, or preferences.
-  3. Do NOT remove any previously added information like patient name or contact details or medical history from the summary — only add new details]
-</SUMMARY>
+[Create an updated, highly condensed English report of the conversation state. 
+ Rules:
+  1. Do NOT build a chronological chat log or append raw text blocks.
+  2. Maintain a single unified snapshot of the patient profile: Name, Phone, and critical historical facts (e.g., 'User has a confirmed booking for X', 'User filed complaints previously').
+  3. When new facts emerge (like a new symptom or inquiry), rewrite the summary to incorporate them into a single, compact paragraph. Overwrite and clean up repetitive or redundant historical records.]
+</SUMMARY>  
 """
 
 

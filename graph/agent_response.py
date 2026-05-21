@@ -9,6 +9,7 @@ class AgentResponse:
     intent:          Optional[str]
     booking_saved:   Optional[bool]
     complaint_saved: Optional[bool]
+    examination_saved: Optional[bool]
     usage:           dict
 
     @staticmethod
@@ -20,6 +21,7 @@ class AgentResponse:
             "booking":     result.get("booking_usage")     or {},
             "complaint":   result.get("complaint_usage")   or {},
             "direct":      result.get("direct_usage")       or {},
+            "examination": result.get("examination_usage") or {},
         }
 
         return AgentResponse(
@@ -27,6 +29,7 @@ class AgentResponse:
             intent          = result.get("intent"),
             booking_saved   = result.get("booking_saved"),
             complaint_saved = result.get("complaint_saved"),
+            examination_saved = result.get("examination_saved"),
             usage           = usage,
         )
 
@@ -36,5 +39,6 @@ class AgentResponse:
             "intent":          self.intent,
             "booking_saved":   self.booking_saved,
             "complaint_saved": self.complaint_saved,
+            "examination_saved": self.examination_saved,
             "usage":           self.usage,
         }   
