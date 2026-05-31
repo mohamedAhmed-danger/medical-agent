@@ -2,12 +2,20 @@ from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import PrimaryKeyConstraint, ForeignKeyConstraint
+from enum import Enum
 
 db = SQLAlchemy()
 
 DEFAULT_COUNT = 0
 RESET_DAYS = 30
 
+
+
+class Status(Enum):
+    PENDING = "Pending"
+    REVIEWED = "Reviewed"
+    ATTENDED = "Attended"
+    NO_SHOW = "No Show"
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -97,19 +105,18 @@ class Complaint(db.Model):
     id             = db.Column(db.Integer, primary_key=True)
     phone_number   = db.Column(db.String(20), nullable=False)
     complaint_text = db.Column(db.Text, nullable=False)
-    is_resolved    = db.Column(db.Boolean, default=False)
-    resolved_at    = db.Column(db.DateTime)
+    status         = db.Column(db.Enum(Status), default=Status.PENDING)  
     created_at     = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    comes_from   = db.Column(db.String(100))
+    comes_from     = db.Column(db.String(100))
+
 
 class Examination(db.Model):
     __tablename__ = 'examinations'
-    id          = db.Column(db.Integer, primary_key=True)
+    id           = db.Column(db.Integer, primary_key=True)
     phone_number = db.Column(db.String(20), nullable=False)
     symptom_text = db.Column(db.Text)
-    is_reviewed    = db.Column(db.Boolean, default=False)
-    reviewed_at    = db.Column(db.DateTime)
-    created_at     = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    status       = db.Column(db.Enum(Status), default=Status.PENDING)  
+    created_at   = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     comes_from   = db.Column(db.String(100))
 
     
@@ -121,12 +128,9 @@ class Booking(db.Model):
     details      = db.Column(db.Text)
     date         = db.Column(db.String(100))
     phone_number = db.Column(db.String(50))
-    are_received = db.Column(db.Boolean, default=False)
+    status       = db.Column(db.Enum(Status), default=Status.PENDING)
     booking_time = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     comes_from   = db.Column(db.String(100))
-    # FIX #3: Added page_id and platform_id so every booking is tied to a
-    # specific clinic page and is filterable in the dashboard.
-    # Run a DB migration after this change (flask db migrate + flask db upgrade).
     page_id      = db.Column(db.String(100), nullable=True)
     platform_id  = db.Column(db.Integer, nullable=True)
 

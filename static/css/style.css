@@ -494,3 +494,35 @@ textarea.form-control { resize: vertical; min-height: 100px; }
   .form-grid { grid-template-columns: 1fr; }
   .page-header { flex-direction: column; }
 }
+
+
+/* ── BOOKING STATUS ── */
+.status-select {
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.status-select.status-pending {
+  background: #F97316;
+  color: #ffffff;
+}
+
+.status-select.status-reviewed {
+  background: #0ea5e9;
+  color: #ffffff;
+}
+
+.status-select.status-attended {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.status-select.status-no_show {
+  background: #dc2626;
+  color: #ffffff;
+}

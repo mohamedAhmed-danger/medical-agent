@@ -1,18 +1,17 @@
-from models.models import Booking, db
+from models.models import Booking,Status, db
 from datetime import datetime, timezone, timedelta
 
 
 class BookingService:
 
     @staticmethod
-    def create_booking(name, details, date, phone_number, are_received=False, comes_from=None):
+    def create_booking(name, details, date, phone_number, comes_from=None):
         try:
             new_booking = Booking(
                 name=name,
                 details=details,
                 date=date,
                 phone_number=phone_number,
-                are_received=are_received,
                 comes_from=comes_from,
                 booking_time=datetime.now(timezone.utc),
             )
@@ -24,15 +23,30 @@ class BookingService:
             return None, f"حدث خطأ: {str(e)}"
 
     @staticmethod
-    def display_bookings():
-        try:
-            before_yesterday = datetime.now(timezone.utc) - timedelta(days=2)
-            bookings = Booking.query.filter(
-                Booking.booking_time >= before_yesterday
-            ).all()
-            return bookings, "تم العثور على الحجوزات"
-        except Exception as e:
-            return None, f"حدث خطأ: {str(e)}"
+    def display_bookings(page=1, per_page=10, search=None, status=None, date_from=None, date_to=None):
+        before_30_days = datetime.now(timezone.utc) - timedelta(days=30)
+        query = Booking.query.filter(Booking.booking_time >= before_30_days)
+
+        if search:
+            query = query.filter(
+                db.or_(
+                    Booking.name.ilike(f'%{search}%'),
+                    Booking.phone_number.ilike(f'%{search}%'),
+                )
+            )
+
+        if status:
+            query = query.filter(Booking.status == Status(status))
+
+        if date_from:
+            query = query.filter(Booking.date >= date_from)
+
+        if date_to:
+            query = query.filter(Booking.date <= date_to)
+
+        query = query.order_by(Booking.booking_time.desc())
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        return pagination, "تم العثور على الحجوزات"
 
     @staticmethod
     def get_booking_by_id(booking_id):
@@ -42,26 +56,24 @@ class BookingService:
         return None, "الحجز غير موجود"
 
     @staticmethod
-    def update_booking_received(booking_id, status):
-        # FIX #5: same Query.get() fix
+    def update_booking_status(booking_id, new_status: Status):
         booking = db.session.get(Booking, booking_id)
         if not booking:
             return None, "الحجز غير موجود"
         try:
-            booking.are_received = status
+            booking.status = new_status
             db.session.commit()
-            return booking, "تم تحديث الحجز"
+            return booking, "تم تحديث الحالة"
         except Exception as e:
             db.session.rollback()
             return None, f"حدث خطأ: {str(e)}"
 
     @staticmethod
     def save_booking(name: str, phone: str, date: str, details: str, comes_from: str) -> str:
-       
         try:
             booking = Booking(
                 name=name,
-                phone_number=phone,      
+                phone_number=phone,
                 date=date,
                 details=details,
                 comes_from=comes_from,

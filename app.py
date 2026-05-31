@@ -16,7 +16,7 @@ from software_services.platform_services import PlatformService
 from software_services.page_services import PageService
 from software_services.booking_services import BookingService
 from software_services.examination_services import ExaminationService
-from models.models import db, User
+from models.models import Status, db, User
 from flask import request, abort
 from models.models import Page
 from parsers.facebook import parse_facebook_message
@@ -487,76 +487,239 @@ def edit_page(platform_id, page_id):
     return render_template('edit_page.html', page=page, clinics=clinics, platforms=platforms)
 
 
-#  BOOKINGS
+# BOOKINGS
 
 @app.route('/bookings')
 @login_required
 def list_bookings():
-    bookings, message = BookingService.display_bookings()
-    return render_template('bookings.html', bookings=bookings)
+    page      = request.args.get('page', 1, type=int)
+    search    = request.args.get('search', '').strip()
+    status    = request.args.get('status', '')
+    date_from = request.args.get('date_from', '')
+    date_to   = request.args.get('date_to', '')
+
+    pagination, message = BookingService.display_bookings(
+        page=page, search=search, status=status,
+        date_from=date_from, date_to=date_to
+    )
+    return render_template('bookings.html',
+        pagination=pagination,
+        bookings=pagination.items,
+        search=search, status=status,
+        date_from=date_from, date_to=date_to,
+        Status=Status
+    )
 
 
-@app.route('/bookings/toggle_received/<int:booking_id>', methods=['POST'])
+@app.route('/bookings/update_status/<int:booking_id>', methods=['POST'])
 @login_required
-def toggle_booking_received(booking_id):
-    booking, message = BookingService.get_booking_by_id(booking_id)
-    if not booking:
-        flash(message, 'danger')
+def update_booking_status(booking_id):
+    new_status_value = request.form.get('status_val')
+    try:
+        status_enum = Status(new_status_value)
+    except ValueError:
+        flash("حالة غير صحيحة", 'danger')
         return redirect(url_for('list_bookings'))
 
-    updated_booking, message = BookingService.update_booking_received(booking_id, not booking.are_received)
-    if updated_booking:
-        flash(message, 'success')
-    else:
-        flash(message, 'danger')
-
+    updated, message = BookingService.update_booking_status(booking_id, status_enum)
+    flash(message, 'success' if updated else 'danger')
     return redirect(url_for('list_bookings'))
 
+@app.route('/bookings/export')
+@login_required
+def export_bookings():
+    search    = request.args.get('search', '').strip()
+    status    = request.args.get('status', '')
+    date_from = request.args.get('date_from', '')
+    date_to   = request.args.get('date_to', '')
 
-#  COMPLAINTS
+    # نفس الـ query بس بدون pagination - كل النتايج
+    pagination, _ = BookingService.display_bookings(
+        page=1, per_page=99999,
+        search=search, status=status,
+        date_from=date_from, date_to=date_to
+    )
+    bookings = pagination.items
 
+    # عمل الـ Excel
+    import openpyxl
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Bookings"
+
+    # Headers
+    ws.append(["الاسم", "التفاصيل", "التاريخ", "رقم الهاتف", "المنصة", "وقت الحجز", "الحالة"])
+
+    # Data
+    for b in bookings:
+        ws.append([
+            b.name,
+            b.details,
+            b.date,
+            b.phone_number,
+            b.comes_from,
+            b.booking_time.strftime('%Y-%m-%d %H:%M'),
+            b.status.value
+        ])
+
+    # حفظ وإرسال
+    from io import BytesIO
+    from flask import send_file
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='bookings.xlsx'
+    )
+
+# COMPLAINTS
+
+# COMPLAINTS
 @app.route('/complaints')
 @login_required
 def list_complaints():
-    complaints, message = ComplaintService.get_unresolved_complaints()
-    return render_template('complaints.html', complaints=complaints)
+    page      = request.args.get('page', 1, type=int)
+    search    = request.args.get('search', '').strip()
+    status    = request.args.get('status', '')
+
+    pagination, _ = ComplaintService.get_all_complaints(
+        page=page, search=search, status=status,
+    )
+    return render_template('complaints.html',
+        pagination=pagination,
+        complaints=pagination.items,
+        search=search, status=status,
+    )
 
 
-@app.route('/complaints/<int:complaint_id>', methods=['GET', 'POST'])
+@app.route('/complaints/update_status/<int:complaint_id>', methods=['POST'])
 @login_required
-def complaint_details(complaint_id):
-    complaint, message = ComplaintService.get_complaint_details(complaint_id)
-
-    if request.method == 'POST':
-        is_resolved = request.form.get('is_resolved') == 'on'
-        success, message = ComplaintService.update_complaint_status(complaint_id, is_resolved)
+def update_complaint_status(complaint_id):
+    new_status_value = request.form.get('status_val')
+    try:
+        status_enum = Status(new_status_value)
+    except ValueError:
+        flash("حالة غير صحيحة", 'danger')
         return redirect(url_for('list_complaints'))
+    updated, message = ComplaintService.update_complaint_status(complaint_id, status_enum)
+    flash(message, 'success' if updated else 'danger')
+    return redirect(url_for('list_complaints'))
 
-    return render_template('complaint_details.html', complaint=complaint)
+@app.route('/complaints/export')
+@login_required
+def export_complaints():
+    search = request.args.get('search', '').strip()
+    status = request.args.get('status', '')
 
+    pagination, _ = ComplaintService.get_all_complaints(
+        page=1, per_page=99999,
+        search=search, status=status
+    )
+    complaints = pagination.items
 
-#  EXAMINATIONS
+    import openpyxl
+    from io import BytesIO
+    from flask import send_file
 
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Complaints"
+    ws.append(["رقم الهاتف", "الشكوى", "تاريخ الإنشاء", "المنصة", "الحالة"])
+
+    for c in complaints:
+        ws.append([
+            c.phone_number,
+            c.complaint_text,
+            c.created_at.strftime('%Y-%m-%d %H:%M'),
+            c.comes_from or 'غير محدد',
+            c.status.value if c.status else 'Pending'
+        ])
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return send_file(output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='complaints.xlsx'
+    )
+
+# EXAMINATIONS
 @app.route('/examinations')
 @login_required
 def list_examinations():
-    examinations, message = ExaminationService.get_unreviewed_examination()
-    return render_template('examinations.html', examinations=examinations) 
+    page      = request.args.get('page', 1, type=int)
+    search    = request.args.get('search', '').strip()
+    status    = request.args.get('status', '')
+    
+
+    pagination, _ = ExaminationService.get_all_examinations(
+        page=page, search=search, status=status,
+    
+    )
+    return render_template('examinations.html',
+        pagination=pagination,
+        examinations=pagination.items,
+        search=search, status=status,
+    )
 
 
-@app.route('/examinations/<int:examination_id>', methods=['GET', 'POST'])
+@app.route('/examinations/update_status/<int:examination_id>', methods=['POST'])
 @login_required
-def examination_details(examination_id):
-    examination, message = ExaminationService.get_examination_details(examination_id)
-
-    if request.method == 'POST':
-        is_reviewed = request.form.get('is_reviewed') == 'on'
-        success, message = ExaminationService.update_examination_status(examination_id, is_reviewed)
+def update_examination_status(examination_id):
+    new_status_value = request.form.get('status_val')
+    try:
+        status_enum = Status(new_status_value)
+    except ValueError:
+        flash("حالة غير صحيحة", 'danger')
         return redirect(url_for('list_examinations'))
+    updated, message = ExaminationService.update_examination_status(examination_id, status_enum)
+    flash(message, 'success' if updated else 'danger')
+    return redirect(url_for('list_examinations'))
 
-    return render_template('examination_details.html', examination=examination)
 
+@app.route('/examinations/export')
+@login_required
+def export_examinations():
+    search = request.args.get('search', '').strip()
+    status = request.args.get('status', '')
 
+    pagination, _ = ExaminationService.get_all_examinations(
+        page=1, per_page=99999,
+        search=search, status=status
+    )
+    examinations = pagination.items
+
+    import openpyxl
+    from io import BytesIO
+    from flask import send_file
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Examinations"
+    ws.append(["رقم الهاتف", "الأعراض", "تاريخ الإنشاء", "المنصة", "الحالة"])
+
+    for e in examinations:
+        ws.append([
+            e.phone_number,
+            e.symptom_text,
+            e.created_at.strftime('%Y-%m-%d %H:%M'),
+            e.comes_from or 'غير محدد',
+            e.status.value if e.status else 'Pending'
+        ])
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return send_file(output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='examinations.xlsx'
+    )
 # ─────────────────────────────────────
 # WEBHOOK
 # ─────────────────────────────────────

@@ -5,44 +5,103 @@
 <div class="page-header">
   <div>
     <h1 class="page-title">الشكاوى</h1>
-    <p class="page-subtitle">الشكاوى غير المحلولة</p>
+    <p class="page-subtitle">كل الشكاوى</p>
   </div>
 </div>
 
+<form method="GET" action="{{ url_for('list_complaints') }}">
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="search-icon"><i data-lucide="search" style="width:15px;height:15px;"></i></span>
+      <input type="text" name="search" placeholder="ابحث برقم الهاتف أو نص الشكوى..." value="{{ search }}">
+    </div>
+    <select name="status" class="form-control" style="width:160px;">
+      <option value="">كل الحالات</option>
+      <option value="Pending"  {% if status == 'Pending'  %}selected{% endif %}>تحت المراجعة</option>
+      <option value="Reviewed" {% if status == 'Reviewed' %}selected{% endif %}>تم المراجعة</option>
+      <option value="Attended" {% if status == 'Attended' %}selected{% endif %}>العميل جه</option>
+      <option value="No Show"  {% if status == 'No Show'  %}selected{% endif %}>العميل مجاش</option>
+    </select>
+    <button type="submit" class="btn btn-primary">
+      <i data-lucide="filter" style="width:15px;height:15px;"></i> فلتر
+    </button>
+    {% if search or status or date_from or date_to %}
+    <a href="{{ url_for('list_complaints') }}" class="btn btn-ghost">مسح</a>
+    {% endif %}
+
+    <a href="{{ url_for('export_complaints', search=search, status=status) }}"
+   class="btn btn-ghost">
+  <i data-lucide="download" style="width:15px;height:15px;"></i> Export Excel
+   </a>
+  </div>
+</form>
+
 <div class="card">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>رقم الهاتف</th>
-        <th>الشكوى</th>
-        <th>تاريخ الإنشاء</th>
-        <th>المنصة</th>
-        <th>الإجراءات</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for complaint in complaints %}
-      <tr>
-        <td>{{ complaint.phone_number }}</td>
-        <td>{{ complaint.complaint_text }}</td>
-        <td>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-        <td>
-          {{ complaint.comes_from if complaint.comes_from else 'غير محدد' }}
-        </td>
-        <td>
-          <a href="{{ url_for('complaint_details', complaint_id=complaint.id) }}" class="btn btn-ghost">
-            عرض التفاصيل
-          </a>
-        </td>
-      </tr>
-      {% else %}
-      <tr>
-        {# تعديل الـ colspan لـ 5 عشان أبعاد الجدول تظبط #}
-        <td colspan="5" class="text-center">لا توجد شكاوى</td>
-      </tr>
+  <div class="table-wrapper">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>رقم الهاتف</th>
+          <th>الشكوى</th>
+          <th>تاريخ الإنشاء</th>
+          <th>المنصة</th>
+          <th>الحالة</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for complaint in complaints %}
+        <tr>
+          <td>{{ complaint.phone_number }}</td>
+          <td>{{ complaint.complaint_text }}</td>
+          <td>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>{{ complaint.comes_from or 'غير محدد' }}</td>
+          <td>
+            <form action="{{ url_for('update_complaint_status', complaint_id=complaint.id) }}" method="POST">
+              <select name="status_val" onchange="this.form.submit()"
+                      class="status-select status-{{ complaint.status.name.lower() }}">
+                <option value="Pending"  {% if complaint.status.value == 'Pending'  %}selected{% endif %}>تحت المراجعة</option>
+                <option value="Reviewed" {% if complaint.status.value == 'Reviewed' %}selected{% endif %}>تم المراجعة</option>
+                <option value="Attended" {% if complaint.status.value == 'Attended' %}selected{% endif %}>العميل جه</option>
+                <option value="No Show"  {% if complaint.status.value == 'No Show'  %}selected{% endif %}>العميل مجاش</option>
+              </select>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">لا توجد شكاوى</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if pagination.pages > 1 %}
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-top:1.25rem; flex-wrap:wrap; gap:0.75rem;">
+    <span style="font-size:0.8rem; color:var(--text-muted);">
+      {{ pagination.total }} شكوى — صفحة {{ pagination.page }} من {{ pagination.pages }}
+    </span>
+    <div style="display:flex; gap:0.4rem;">
+      {% if pagination.has_prev %}
+      <a href="{{ url_for('list_complaints', page=pagination.prev_num, search=search, status=status, date_from=date_from, date_to=date_to) }}" class="btn btn-ghost btn-icon">
+        <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
+      </a>
+      {% endif %}
+      {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+        <a href="{{ url_for('list_complaints', page=p, search=search, status=status, date_from=date_from, date_to=date_to) }}"
+           class="btn {% if p == pagination.page %}btn-primary{% else %}btn-ghost{% endif %}">{{ p }}</a>
+        {% else %}
+        <span style="padding:0.5rem 0.25rem; color:var(--text-muted);">…</span>
+        {% endif %}
       {% endfor %}
-    </tbody>
-  </table>
+      {% if pagination.has_next %}
+      <a href="{{ url_for('list_complaints', page=pagination.next_num, search=search, status=status, date_from=date_from, date_to=date_to) }}" class="btn btn-ghost btn-icon">
+        <i data-lucide="chevron-left" style="width:16px;height:16px;"></i>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 {% endblock %}
+{% block scripts %}<script>lucide.createIcons();</script>{% endblock %}
