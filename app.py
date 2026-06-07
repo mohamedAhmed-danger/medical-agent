@@ -19,7 +19,7 @@ from software_services.examination_services import ExaminationService
 from models.models import Status, db, User
 from flask import request, abort
 from models.models import Page
-from parsers.facebook import parse_facebook_message
+from parsers.facebook import parse_facebook_comment, parse_facebook_message
 from platfroms.facebook_handler import FacebookHandler
 
 app = Flask(__name__)
@@ -723,72 +723,81 @@ def export_examinations():
 # ─────────────────────────────────────
 # WEBHOOK
 # ─────────────────────────────────────
-
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
-
-
+ 
+ 
 @app.route("/webhook/facebook", methods=["GET", "POST"])
 def fb_webhook():
-
+ 
     if request.method == "GET":
         if request.args.get("hub.verify_token") == VERIFY_TOKEN:
             return request.args.get("hub.challenge", "")
         abort(403)
-
+ 
     try:
         payload = request.json or {}
         entries = payload.get("entry", [])
     except Exception:
         return "OK", 200
-
+ 
     def process():
         for entry in entries:
             page_id = entry.get("id")
             if not page_id:
                 continue
-
+ 
             with app.app_context():
                 try:
                     page = Page.query.filter_by(page_id=page_id).first()
                     if not page:
                         continue
-
+ 
                     handler = FacebookHandler(page)
-
+ 
+                    # ── regular messages ──────────────────────────────────
                     for messaging in entry.get("messaging", []):
-
-                        mid = messaging.get("message", {}).get("mid")
-                        if mid:
-                            with _seen_lock:
-                                if mid in _seen_message_ids:
-                                    continue
-                                _seen_message_ids.add(mid)
-                                if len(_seen_message_ids) > 10_000:
-                                    _seen_message_ids.clear()
-
+ 
                         message = parse_facebook_message(
                             messaging=messaging,
                             page_id=page.page_id,
                             platform_id=handler.platform_id,
                             platform_name=handler.platform_name,
                         )
-
+ 
                         if not message:
                             continue
-
-                        reply = handler.handle(message)
-
+ 
+                        handler.send_typing(message.sender_id)
+                        reply, pdf_bytes = handler.handle(message)
+ 
                         if reply:
                             handler.send(message.sender_id, reply)
+ 
+                        if pdf_bytes:
+                            handler.send_file(
+                                recipient_id=message.sender_id,
+                                file_bytes=pdf_bytes,
+                                filename="booking_ticket.pdf",
+                            )
+ 
+                    # ── comments ──────────────────────────────────────────
+                    for change in entry.get("changes", []):
+                        print(f"[DEBUG CHANGE VALUE] {change.get('value', {})}")
+                        comment_id = parse_facebook_comment(change)
 
+                        if not comment_id:
+                            continue
+                        print(f"[DEBUG COMMENT] comment_id={comment_id}")  # ← زو
+                        handler.handle_comment(comment_id)
+ 
                 except Exception:
                     import traceback
                     print("WEBHOOK THREAD ERROR:")
                     print(traceback.format_exc())
-
+ 
     threading.Thread(target=process, daemon=True).start()
     return "OK", 200
-
+ 
 
 if __name__ == '__main__':
     app.run()

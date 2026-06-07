@@ -124,6 +124,7 @@ class Examination(db.Model):
 class Booking(db.Model):
     __tablename__ = 'bookings'
     id           = db.Column(db.Integer, primary_key=True)
+    reference_id =  db.Column(db.String(20), unique=True, nullable=True, index=True)
     name         = db.Column(db.String(120), nullable=False)
     details      = db.Column(db.Text)
     date         = db.Column(db.String(100))

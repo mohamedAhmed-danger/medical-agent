@@ -37,3 +37,8 @@ class AgentState(TypedDict):
     booking_usage: Optional[dict]
     complaint_usage: Optional[dict]
     direct_usage: Optional[dict]
+
+
+
+    booking_reference: Optional[str]
+    booking_pdf:       Optional[bytes] 

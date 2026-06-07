@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تسجيل الدخول — Gharbia Clinic</title>
+  <title>تسجيل الدخول — Alexandria Specialized Clinics</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
@@ -11,11 +11,11 @@
   <style>
     /* Login-only overrides — لا تأثير على باقي الصفحات */
     body {
-      display: flex;                  /* ← ده المهم */
+      display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      margin-right: 0 !important;    /* يلغي margin الـ sidebar */
+      margin-right: 0 !important;
     }
 
     .login-bg {
@@ -67,12 +67,16 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 1.3rem;
       box-shadow: 0 0 20px var(--primary-glow);
+      flex-shrink: 0;
     }
 
     .login-logo .brand-name {
       font-family: var(--font-display);
       font-size: 1.4rem; font-weight: 800;
       letter-spacing: 0.05em;
+      white-space: normal;
+      max-width: 180px;
+      line-height: 1.2;
     }
     .login-logo .brand-name span { color: var(--primary-light); }
 
@@ -123,7 +127,7 @@
 
     <div class="login-logo">
       <div class="brand-icon">⚡</div>
-      <span class="brand-name">Gharbia<span>Clinic</span></span>
+      <span class="brand-name">Alexandria <span>Specialized Clinics</span></span>
     </div>
 
     <h1 class="login-title">مرحبًا بعودتك</h1>

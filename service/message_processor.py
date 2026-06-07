@@ -47,7 +47,7 @@ def _calc_total_usage(result: dict) -> dict:
     }
 
 
-def run_agent(message: IncomingMessage) -> str:
+def run_agent(message: IncomingMessage) -> tuple[str, bytes | None]:
     client = ClientService.get_or_create_client(
         message.sender_id, message.page_id, message.platform_id
     )
@@ -92,4 +92,4 @@ def run_agent(message: IncomingMessage) -> str:
     for node, u in usage["breakdown"].items():
         print(f"   └─ {node:<22} in={u['input']:>5} | out={u['output']:>5} | total={u['total']:>6}")
 
-    return response_obj.response
+    return response_obj.response, result.get("booking_pdf")
