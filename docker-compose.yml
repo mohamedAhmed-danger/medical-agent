@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  web:
+    build: .
+    container_name: medical-agent
+    ports:
+      - "127.0.0.1:5026:5026"
+    volumes:
+      - sqlite_data:/app/instance
+    env_file:
+      - .env
+    restart: always
+volumes:
+  sqlite_data:

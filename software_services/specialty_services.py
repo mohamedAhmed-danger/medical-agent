@@ -1,11 +1,18 @@
 from models.models import  Specialty, db
 
+Max_specialties=10
 
 class SpecialtyService:
     # this function is used to create a new specialty in the database
     @staticmethod
     def create_specialty(name,details,clinic_id):
-    
+        specialties_count = Specialty.query.filter_by(clinic_id=clinic_id).count()
+        if specialties_count >= Max_specialties:
+            return None, f"لقد وصلت للحد الأقصى من التخصصات ({Max_specialties} تخصصات)"
+        name=name.strip().lower()
+        existing_specialty = Specialty.query.filter_by(name=name, clinic_id=clinic_id).first()
+        if existing_specialty:
+            return None, "يوجد تخصص آخر بنفس هذا الاسم في العيادة"
         try:
           new_specialty = Specialty(
             name=name,
@@ -18,7 +25,7 @@ class SpecialtyService:
           return new_specialty, "تم إنشاء التخصص بنجاح"
         except Exception as e:
           db.session.rollback() 
-        return None, f"حدث خطأ أثناء إنشاء التخصص: {str(e)}"
+          return None, f"حدث خطأ أثناء إنشاء التخصص: {str(e)}"
 
     # this function is to get a specialty by id
     @staticmethod
@@ -60,4 +67,20 @@ class SpecialtyService:
             return specialty, "تم تحديث التخصص بنجاح"
         except Exception as e:
             db.session.rollback()
-            return None, "فشل تحديث البيانات"              
+            return None, "فشل تحديث البيانات"  
+
+    # this function is used to delete a specialty by id
+    @staticmethod
+    def delete_specialty(specialty_id):
+        specialty = Specialty.query.get(specialty_id)
+
+        if not specialty:
+            return None, "التخصص غير موجود"
+
+        try:
+            db.session.delete(specialty)
+            db.session.commit()
+            return specialty, "تم حذف التخصص بنجاح"
+        except Exception as e:
+            db.session.rollback() 
+            return None, f"حدث خطأ أثناء حذف التخصص: {str(e)}"                

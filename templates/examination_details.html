@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}تفاصيل الفحص{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">تفاصيل الفحص</h1>
+    <p class="page-subtitle">رقم الهاتف: {{ examination.phone_number }}</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="form-grid">
+
+    <div class="form-group full-width">
+      <label>رقم الهاتف</label>
+      <input type="text" class="form-control" value="{{ examination.phone_number }}" disabled>
+    </div>
+
+    <div class="form-group full-width">
+      <label>الأعراض</label>
+      <textarea class="form-control" rows="4" disabled>{{ examination.symptom_text }}</textarea>
+    </div>
+
+    <div class="form-group full-width">
+      <label>تاريخ الإنشاء</label>
+      <input type="text" class="form-control" value="{{ examination.created_at.strftime('%Y-%m-%d %H:%M') }}" disabled>
+    </div>
+
+    <div class="form-group full-width">
+      <label>الحالة</label>
+      <input type="text" class="form-control" value="{{ 'تمت المراجعة' if examination.is_reviewed else 'قيد المراجعة' }}" disabled>
+    </div>
+
+    {% if examination.reviewed_at %}
+    <div class="form-group full-width">
+      <label>تاريخ المراجعة</label>
+      <input type="text" class="form-control" value="{{ examination.reviewed_at.strftime('%Y-%m-%d %H:%M') }}" disabled>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <form action="{{ url_for('examination_details', examination_id=examination.id) }}" method="POST">
+    <div class="form-actions">
+      {% if not examination.is_reviewed %}
+      <button type="submit" name="is_reviewed" value="on" class="btn btn-primary">
+        تمت المراجعة ✓
+      </button>
+      {% else %}
+      <button type="submit" class="btn btn-ghost">
+        إلغاء المراجعة
+      </button>
+      {% endif %}
+      <a href="{{ url_for('list_examinations') }}" class="btn btn-ghost">رجوع</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

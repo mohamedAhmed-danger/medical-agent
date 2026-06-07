@@ -8,16 +8,10 @@
 
   <div>
     <h1 class="page-title">الخدمات</h1>
-
-    <p class="page-subtitle">
-      إدارة جميع الخدمات الطبية
-    </p>
+    <p class="page-subtitle">إدارة جميع الخدمات الطبية</p>
   </div>
 
-  <a
-    href="{{ url_for('create_service') }}"
-    class="btn btn-primary"
-  >
+  <a href="{{ url_for('create_service') }}" class="btn btn-primary">
     <i data-lucide="plus"></i>
     إضافة خدمة
   </a>
@@ -27,35 +21,19 @@
 <div class="card">
 
   <div class="card-header">
-
-    <h2 class="card-title">
-      قائمة الخدمات
-    </h2>
-
+    <h2 class="card-title">قائمة الخدمات</h2>
   </div>
 
   <div class="toolbar">
-
     <div class="search-box">
-
       <i data-lucide="search" class="search-icon"></i>
-
-      <input
-        type="text"
-        id="tableSearch"
-        placeholder="ابحث عن خدمة..."
-      >
-
+      <input type="text" id="tableSearch" placeholder="ابحث عن خدمة...">
     </div>
-
   </div>
 
   <div class="table-wrapper">
-
     <table>
-
       <thead>
-
         <tr>
           <th>#</th>
           <th>اسم الخدمة</th>
@@ -64,48 +42,43 @@
           <th>العيادة</th>
           <th>الإجراءات</th>
         </tr>
-
       </thead>
 
       <tbody>
-
         {% for service in services %}
-
         <tr>
-
           <td>{{ service.id }}</td>
 
           <td>
-            <span class="badge badge-primary">
-              {{ service.name }}
-            </span>
+            <span class="badge badge-primary">{{ service.name }}</span>
           </td>
 
           <td>{{ service.description }}</td>
-
           <td>{{ service.price }} ج.م</td>
-
           <td>{{ service.clinic.name }}</td>
 
-          <td class="table-actions">
+          <td class="table-actions" style="direction: ltr;">
 
-            <a
-              href="{{ url_for('edit_service', service_id=service.id) }}"
-              class="btn btn-ghost btn-icon"
-            >
+            <a href="{{ url_for('edit_service', service_id=service.id) }}"
+               class="btn btn-ghost btn-icon">
               <i data-lucide="pencil"></i>
             </a>
 
+            <form action="{{ url_for('delete_service', service_id=service.id) }}"
+                  method="POST"
+                  style="display:inline"
+                  onsubmit="confirmDelete(this); return false;">
+              <button type="submit" class="btn btn-ghost btn-icon"
+                      style="color: var(--color-danger, #ef4444)">
+                <i data-lucide="trash-2"></i>
+              </button>
+            </form>
+
           </td>
-
         </tr>
-
         {% endfor %}
-
       </tbody>
-
     </table>
-
   </div>
 
 </div>

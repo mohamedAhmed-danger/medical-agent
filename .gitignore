@@ -2,3 +2,4 @@ myenv
 instance/
 pycache/
 *.pyc
+.env

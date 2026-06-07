@@ -1,33 +1,57 @@
+import os
 import datetime
+import threading
+import click
 
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_migrate import Migrate
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from software_services.User_services import UserService
 from software_services.clinic_services import ClinicService 
-from software_services.complaine_services import ComplaintService
+from software_services.complaint_services import ComplaintService
 from software_services.doctor_services import DoctorService  
 from software_services.specialty_services import SpecialtyService
 from software_services.service_services import ServiceService
 from software_services.platform_services import PlatformService
 from software_services.page_services import PageService
 from software_services.booking_services import BookingService
-from models.models import db, User
-
+from software_services.examination_services import ExaminationService
+from models.models import Status, db, User
+from flask import request, abort
+from models.models import Page
+from parsers.facebook import parse_facebook_comment, parse_facebook_message
+from platfroms.facebook_handler import FacebookHandler
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///medical_agent.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your_secret_key_here'
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 
 login_manager = LoginManager(app)
 db.init_app(app)
 migrate = Migrate(app, db)
 
+_seen_message_ids: set = set()
+_seen_lock = threading.Lock()
+
 
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
+
+
+@app.cli.command("create-admin")
+@click.option("--username", prompt=True)
+@click.option("--password", prompt=True)
+def create_admin(username, password):
+    existing = User.query.filter_by(username=username).first()
+    if existing:
+        print("Admin already exists")
+        return
+    admin = User(username=username, password=password)
+    db.session.add(admin)
+    db.session.commit()
+    print("Admin created successfully")
 
 
 #  AUTH
@@ -110,14 +134,13 @@ def edit_user(user_id):
 
 #  CLINICS
 
-#this route is used to display all clinics
 @app.route('/clinics')
 @login_required                              
 def list_clinics():
     clinics, message = ClinicService.get_all_clinics()
     return render_template('clinics.html', clinics=clinics)
 
-#this route is used to create a new clinic and save it in the database
+
 @app.route('/clinics/new', methods=['GET', 'POST'])
 @login_required                              
 def create_clinic():
@@ -135,7 +158,7 @@ def create_clinic():
 
     return render_template('create_clinic.html')
 
-#this route is used to edit a clinic by id and update it in the database
+
 @app.route('/clinics/<int:clinic_id>/edit', methods=['GET', 'POST'])   
 @login_required                                                       
 def edit_clinic(clinic_id):
@@ -158,11 +181,10 @@ def edit_clinic(clinic_id):
             flash(message, 'danger')
 
     return render_template('edit_clinic.html', clinic=clinic)
-# end of clinic routes
+
 
 #  DOCTORS
 
-#this route is used to display all doctors
 @app.route('/doctors')
 @login_required
 def list_doctors():
@@ -170,7 +192,6 @@ def list_doctors():
     return render_template('doctors.html', doctors=doctors)
 
 
-#this route is used to create a new doctor and save it in the database
 @app.route('/doctors/new', methods=['GET', 'POST'])
 @login_required
 def create_doctor():
@@ -181,11 +202,7 @@ def create_doctor():
         doctor_info = request.form['doctor_info']
         clinic_id = request.form['clinic_id']
 
-        doctor, message = DoctorService.create_doctor(
-            name,
-            doctor_info,
-            clinic_id
-        )
+        doctor, message = DoctorService.create_doctor(name, doctor_info, clinic_id)
 
         if doctor:
             flash(message, 'success')
@@ -193,12 +210,9 @@ def create_doctor():
         else:
             flash(message, 'danger')
 
-    return render_template(
-        'create_doctor.html',
-        clinics=clinics
-    )
+    return render_template('create_doctor.html', clinics=clinics)
 
-#this route is used to edit a doctor by id and update it in the database
+
 @app.route('/doctors/<int:doctor_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_doctor(doctor_id):
@@ -209,7 +223,7 @@ def edit_doctor(doctor_id):
         return redirect(url_for('list_doctors'))       
 
     if request.method == 'POST':
-        name      = request.form['name']
+        name        = request.form['name']
         doctor_info = request.form['doctor_info']
         updated_doctor, message = DoctorService.update_doctor(doctor_id, name, doctor_info)
 
@@ -221,33 +235,40 @@ def edit_doctor(doctor_id):
 
     return render_template('edit_doctor.html', doctor=doctor)
 
-# end of doctor routes
 
-#sepcialties routes
+@app.route('/doctors/<int:doctor_id>/delete', methods=['POST'])
+@login_required
+def delete_doctor(doctor_id):
+    doctor, message = DoctorService.delete_doctor(doctor_id)
 
-#this route is used to display all specialties
+    if doctor:
+        flash(message, 'success')
+    else:
+        flash(message, 'danger')
+
+    return redirect(url_for('list_doctors'))
+
+
+#  SPECIALTIES
+
 @app.route('/specialties')
 @login_required
 def list_specialties():
     specialties, message = SpecialtyService.get_all_specialties()
     return render_template('specialties.html', specialties=specialties)
 
-#this route is used to create a new specialty and save it in the database
+
 @app.route('/specialties/new', methods=['GET', 'POST'])
 @login_required
 def create_specialty():
     clinics, _ = ClinicService.get_all_clinics()
 
     if request.method == 'POST':
-        name = request.form['name']
-        details = request.form['details']
+        name      = request.form['name']
+        details   = request.form['details']
         clinic_id = request.form['clinic_id']
 
-        specialty, message = SpecialtyService.create_specialty(
-            name,
-            details,
-            clinic_id
-        )
+        specialty, message = SpecialtyService.create_specialty(name, details, clinic_id)
 
         if specialty:
             flash(message, 'success')
@@ -255,12 +276,9 @@ def create_specialty():
         else:
             flash(message, 'danger')
 
-    return render_template(
-        'create_specialty.html',
-        clinics=clinics
-    )
+    return render_template('create_specialty.html', clinics=clinics)
 
-    #this route is used to edit a specialty by id and update it in the database
+
 @app.route('/specialties/<int:specialty_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_specialty(specialty_id):
@@ -271,8 +289,8 @@ def edit_specialty(specialty_id):
         return redirect(url_for('list_specialties'))       
 
     if request.method == 'POST':
-        name      = request.form['name']
-        details   = request.form['details']
+        name    = request.form['name']
+        details = request.form['details']
         updated_specialty, message = SpecialtyService.update_specialty(specialty_id, name, details)
 
         if updated_specialty:
@@ -281,38 +299,43 @@ def edit_specialty(specialty_id):
         else:
             flash(message, 'danger')
 
-    return render_template('edit_specialty.html', specialty=specialty)    
+    return render_template('edit_specialty.html', specialty=specialty)
 
 
+@app.route('/specialties/<int:specialty_id>/delete', methods=['POST'])
+@login_required
+def delete_specialty(specialty_id):
+    specialty, message = SpecialtyService.delete_specialty(specialty_id)
+
+    if specialty:
+        flash(message, 'success')
+    else:
+        flash(message, 'danger')
+
+    return redirect(url_for('list_specialties'))
 
 
-# end of specialty routes
-# services routes
-# this route is used to display all services
+#  SERVICES
+
 @app.route('/services')
 @login_required
 def list_services():
     services, message = ServiceService.get_all_services()
     return render_template('services.html', services=services)
 
-# this route is used to create a new service and save it in the database
+
 @app.route('/services/new', methods=['GET', 'POST'])
 @login_required
 def create_service():
     clinics, _ = ClinicService.get_all_clinics()
 
     if request.method == 'POST':
-        name = request.form['name']
+        name        = request.form['name']
         description = request.form['description']
-        price = request.form['price']
-        clinic_id = request.form['clinic_id']
+        price       = request.form['price']
+        clinic_id   = request.form['clinic_id']
 
-        service, message = ServiceService.create_service(
-            name,
-            description,
-            clinic_id,
-            price
-        )
+        service, message = ServiceService.create_service(name, description, clinic_id, price)
 
         if service:
             flash(message, 'success')
@@ -320,12 +343,9 @@ def create_service():
         else:
             flash(message, 'danger')
 
-    return render_template(
-        'create_service.html',
-        clinics=clinics
-    )
+    return render_template('create_service.html', clinics=clinics)
 
-# this route is used to edit a service by id and update it in the database
+
 @app.route('/services/<int:service_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_service(service_id):
@@ -336,9 +356,9 @@ def edit_service(service_id):
         return redirect(url_for('list_services'))
 
     if request.method == 'POST':
-        name = request.form['name']
+        name        = request.form['name']
         description = request.form['description']
-        price = request.form['price']
+        price       = request.form['price']
 
         updated_service, message = ServiceService.update_service(service_id, name, description, price)
 
@@ -350,11 +370,22 @@ def edit_service(service_id):
 
     return render_template('edit_service.html', service=service)
 
-# end of services routes
 
-# platforms routes
+@app.route('/services/<int:service_id>/delete', methods=['POST'])
+@login_required
+def delete_service(service_id):
+    service, message = ServiceService.delete_service(service_id)
 
-# this route is used to display all platforms
+    if service:
+        flash(message, 'success')
+    else:
+        flash(message, 'danger')
+
+    return redirect(url_for('list_services'))
+
+
+#  PLATFORMS
+
 @app.route('/platforms')
 @login_required
 def list_platforms():
@@ -362,19 +393,19 @@ def list_platforms():
     return render_template('platforms.html', platforms=platforms)
 
 
-# this route is used to create a new platform and save it in the database
 @app.route('/platforms/new', methods=['GET', 'POST'])
 @login_required
 def create_platform():
     if request.method == 'POST':
         name = request.form['name']
-        platform, message= PlatformService.create_platform(name)
+        platform, message = PlatformService.create_platform(name)
         if platform:
             flash(message, 'success')
             return redirect(url_for('list_platforms'))
         else:
             flash(message, 'danger')
     return render_template('create_platform.html')
+
 
 @app.route('/platforms/<int:platform_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -387,7 +418,6 @@ def edit_platform(platform_id):
 
     if request.method == 'POST':
         name = request.form['name']
-
         updated_platform, message = PlatformService.update_platform(platform_id, name)
 
         if updated_platform:
@@ -398,24 +428,24 @@ def edit_platform(platform_id):
 
     return render_template('edit_platform.html', platform=platform)
 
-# end of platforms routes
-#  pages routes
 
-# this route is used to display the pages
+#  PAGES
+
 @app.route('/pages')
 @login_required
 def list_pages():
     pages, message = PageService.get_all_pages()
     return render_template('pages.html', pages=pages)
-#this route to add page
+
+
 @app.route('/pages/new', methods=['GET', 'POST'])
 @login_required
 def create_page():
     if request.method == 'POST':
-        clinic_id = request.form['clinic_id']
+        clinic_id   = request.form['clinic_id']
         platform_id = request.form['platform_id']
-        page_id = request.form['page_id']
-        token = request.form['token']
+        page_id     = request.form['page_id']
+        token       = request.form['token']
         page, message = PageService.create_page(clinic_id, platform_id, page_id, token)
         if page:
             flash(message, 'success')
@@ -423,11 +453,11 @@ def create_page():
         else:
             flash(message, 'danger')
 
-    clinics, _ = ClinicService.get_all_clinics()
+    clinics, _   = ClinicService.get_all_clinics()
     platforms, _ = PlatformService.get_all_platforms()
     return render_template('create_page.html', clinics=clinics, platforms=platforms)
 
-# this route is used to edit a page by id and update it in the database
+
 @app.route('/pages/<int:platform_id>/<page_id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_page(platform_id, page_id):
@@ -437,14 +467,14 @@ def edit_page(platform_id, page_id):
         return redirect(url_for('list_pages'))
 
     if request.method == 'POST':
-        clinic_id = request.form['clinic_id']
+        clinic_id       = request.form['clinic_id']
         platform_id_new = request.form['platform_id']
-        token = request.form['token']
+        token           = request.form['token']
         updated_page, message = PageService.update_page(
             page_id=page.page_id,
             clinic_id=clinic_id,
             platform_id=platform_id_new,
-            token=token
+            token=token,
         )
         if updated_page:
             flash(message, 'success')
@@ -452,70 +482,322 @@ def edit_page(platform_id, page_id):
         else:
             flash(message, 'danger')
 
-    clinics, _ = ClinicService.get_all_clinics()
+    clinics, _   = ClinicService.get_all_clinics()
     platforms, _ = PlatformService.get_all_platforms()
     return render_template('edit_page.html', page=page, clinics=clinics, platforms=platforms)
-# end of pages routes
 
-#this is route for display the bookings
+
+# BOOKINGS
+
 @app.route('/bookings')
 @login_required
 def list_bookings():
-    bookings, message = BookingService.display_bookings()
-    return render_template('bookings.html', bookings=bookings)
+    page      = request.args.get('page', 1, type=int)
+    search    = request.args.get('search', '').strip()
+    status    = request.args.get('status', '')
+    date_from = request.args.get('date_from', '')
+    date_to   = request.args.get('date_to', '')
 
-#this is route for make toggle
-@app.route('/bookings/toggle_received/<int:booking_id>', methods=['POST'])
-@login_required
-def toggle_booking_received(booking_id):
-    booking, message = BookingService.get_booking_by_id(booking_id)
-    if not booking:
-        flash(message, 'danger')
-        return redirect(url_for('list_bookings'))
-
-    updated_booking, message = BookingService.update_booking_received(booking_id, not booking.are_received)
-    if updated_booking:
-        flash(message, 'success')
-    else:
-        flash(message, 'danger')
-
-    return redirect(url_for('list_bookings'))
-
-# end of bookings routes
-
-# complaints routes
-
-# this route is to display the complaints is not resolved
-@app.route('/complaints')
-@login_required
-def list_complaints():
-    complaints, message = ComplaintService.get_unresolved_complaints()
-    return render_template('complaints.html', complaints=complaints)
-
-
-# this route is to display the complaint details
-@app.route('/complaints/<int:complaint_id>', methods=['GET', 'POST'])
-@login_required
-def complaint_details(complaint_id):
-
-    complaint, message = ComplaintService.get_complaint_details(complaint_id)
-
-    if request.method == 'POST':
-
-        is_resolved = request.form.get('is_resolved') == 'on'
-
-        success, message = ComplaintService.update_complaint_status(
-            complaint_id,
-            is_resolved
-        )
-
-        return redirect(url_for('list_complaints'))
-
-    return render_template(
-        'complaint_details.html',
-        complaint=complaint
+    pagination, message = BookingService.display_bookings(
+        page=page, search=search, status=status,
+        date_from=date_from, date_to=date_to
+    )
+    return render_template('bookings.html',
+        pagination=pagination,
+        bookings=pagination.items,
+        search=search, status=status,
+        date_from=date_from, date_to=date_to,
+        Status=Status
     )
 
 
+@app.route('/bookings/update_status/<int:booking_id>', methods=['POST'])
+@login_required
+def update_booking_status(booking_id):
+    new_status_value = request.form.get('status_val')
+    try:
+        status_enum = Status(new_status_value)
+    except ValueError:
+        flash("حالة غير صحيحة", 'danger')
+        return redirect(url_for('list_bookings'))
+
+    updated, message = BookingService.update_booking_status(booking_id, status_enum)
+    flash(message, 'success' if updated else 'danger')
+    return redirect(url_for('list_bookings'))
+
+@app.route('/bookings/export')
+@login_required
+def export_bookings():
+    search    = request.args.get('search', '').strip()
+    status    = request.args.get('status', '')
+    date_from = request.args.get('date_from', '')
+    date_to   = request.args.get('date_to', '')
+
+    # نفس الـ query بس بدون pagination - كل النتايج
+    pagination, _ = BookingService.display_bookings(
+        page=1, per_page=99999,
+        search=search, status=status,
+        date_from=date_from, date_to=date_to
+    )
+    bookings = pagination.items
+
+    # عمل الـ Excel
+    import openpyxl
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Bookings"
+
+    # Headers
+    ws.append(["الاسم", "التفاصيل", "التاريخ", "رقم الهاتف", "المنصة", "وقت الحجز", "الحالة"])
+
+    # Data
+    for b in bookings:
+        ws.append([
+            b.name,
+            b.details,
+            b.date,
+            b.phone_number,
+            b.comes_from,
+            b.booking_time.strftime('%Y-%m-%d %H:%M'),
+            b.status.value
+        ])
+
+    # حفظ وإرسال
+    from io import BytesIO
+    from flask import send_file
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='bookings.xlsx'
+    )
+
+# COMPLAINTS
+
+# COMPLAINTS
+@app.route('/complaints')
+@login_required
+def list_complaints():
+    page      = request.args.get('page', 1, type=int)
+    search    = request.args.get('search', '').strip()
+    status    = request.args.get('status', '')
+
+    pagination, _ = ComplaintService.get_all_complaints(
+        page=page, search=search, status=status,
+    )
+    return render_template('complaints.html',
+        pagination=pagination,
+        complaints=pagination.items,
+        search=search, status=status,
+    )
+
+
+@app.route('/complaints/update_status/<int:complaint_id>', methods=['POST'])
+@login_required
+def update_complaint_status(complaint_id):
+    new_status_value = request.form.get('status_val')
+    try:
+        status_enum = Status(new_status_value)
+    except ValueError:
+        flash("حالة غير صحيحة", 'danger')
+        return redirect(url_for('list_complaints'))
+    updated, message = ComplaintService.update_complaint_status(complaint_id, status_enum)
+    flash(message, 'success' if updated else 'danger')
+    return redirect(url_for('list_complaints'))
+
+@app.route('/complaints/export')
+@login_required
+def export_complaints():
+    search = request.args.get('search', '').strip()
+    status = request.args.get('status', '')
+
+    pagination, _ = ComplaintService.get_all_complaints(
+        page=1, per_page=99999,
+        search=search, status=status
+    )
+    complaints = pagination.items
+
+    import openpyxl
+    from io import BytesIO
+    from flask import send_file
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Complaints"
+    ws.append(["رقم الهاتف", "الشكوى", "تاريخ الإنشاء", "المنصة", "الحالة"])
+
+    for c in complaints:
+        ws.append([
+            c.phone_number,
+            c.complaint_text,
+            c.created_at.strftime('%Y-%m-%d %H:%M'),
+            c.comes_from or 'غير محدد',
+            c.status.value if c.status else 'Pending'
+        ])
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return send_file(output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='complaints.xlsx'
+    )
+
+# EXAMINATIONS
+@app.route('/examinations')
+@login_required
+def list_examinations():
+    page      = request.args.get('page', 1, type=int)
+    search    = request.args.get('search', '').strip()
+    status    = request.args.get('status', '')
+    
+
+    pagination, _ = ExaminationService.get_all_examinations(
+        page=page, search=search, status=status,
+    
+    )
+    return render_template('examinations.html',
+        pagination=pagination,
+        examinations=pagination.items,
+        search=search, status=status,
+    )
+
+
+@app.route('/examinations/update_status/<int:examination_id>', methods=['POST'])
+@login_required
+def update_examination_status(examination_id):
+    new_status_value = request.form.get('status_val')
+    try:
+        status_enum = Status(new_status_value)
+    except ValueError:
+        flash("حالة غير صحيحة", 'danger')
+        return redirect(url_for('list_examinations'))
+    updated, message = ExaminationService.update_examination_status(examination_id, status_enum)
+    flash(message, 'success' if updated else 'danger')
+    return redirect(url_for('list_examinations'))
+
+
+@app.route('/examinations/export')
+@login_required
+def export_examinations():
+    search = request.args.get('search', '').strip()
+    status = request.args.get('status', '')
+
+    pagination, _ = ExaminationService.get_all_examinations(
+        page=1, per_page=99999,
+        search=search, status=status
+    )
+    examinations = pagination.items
+
+    import openpyxl
+    from io import BytesIO
+    from flask import send_file
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Examinations"
+    ws.append(["رقم الهاتف", "الأعراض", "تاريخ الإنشاء", "المنصة", "الحالة"])
+
+    for e in examinations:
+        ws.append([
+            e.phone_number,
+            e.symptom_text,
+            e.created_at.strftime('%Y-%m-%d %H:%M'),
+            e.comes_from or 'غير محدد',
+            e.status.value if e.status else 'Pending'
+        ])
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return send_file(output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name='examinations.xlsx'
+    )
+# ─────────────────────────────────────
+# WEBHOOK
+# ─────────────────────────────────────
+VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
+ 
+ 
+@app.route("/webhook/facebook", methods=["GET", "POST"])
+def fb_webhook():
+ 
+    if request.method == "GET":
+        if request.args.get("hub.verify_token") == VERIFY_TOKEN:
+            return request.args.get("hub.challenge", "")
+        abort(403)
+ 
+    try:
+        payload = request.json or {}
+        entries = payload.get("entry", [])
+    except Exception:
+        return "OK", 200
+ 
+    def process():
+        for entry in entries:
+            page_id = entry.get("id")
+            if not page_id:
+                continue
+ 
+            with app.app_context():
+                try:
+                    page = Page.query.filter_by(page_id=page_id).first()
+                    if not page:
+                        continue
+ 
+                    handler = FacebookHandler(page)
+ 
+                    # ── regular messages ──────────────────────────────────
+                    for messaging in entry.get("messaging", []):
+ 
+                        message = parse_facebook_message(
+                            messaging=messaging,
+                            page_id=page.page_id,
+                            platform_id=handler.platform_id,
+                            platform_name=handler.platform_name,
+                        )
+ 
+                        if not message:
+                            continue
+ 
+                        handler.send_typing(message.sender_id)
+                        reply, pdf_bytes = handler.handle(message)
+ 
+                        if reply:
+                            handler.send(message.sender_id, reply)
+ 
+                        if pdf_bytes:
+                            handler.send_file(
+                                recipient_id=message.sender_id,
+                                file_bytes=pdf_bytes,
+                                filename="booking_ticket.pdf",
+                            )
+ 
+                    # ── comments ──────────────────────────────────────────
+                    for change in entry.get("changes", []):
+                        print(f"[DEBUG CHANGE VALUE] {change.get('value', {})}")
+                        comment_id = parse_facebook_comment(change)
+
+                        if not comment_id:
+                            continue
+                        print(f"[DEBUG COMMENT] comment_id={comment_id}")  # ← زو
+                        handler.handle_comment(comment_id)
+ 
+                except Exception:
+                    import traceback
+                    print("WEBHOOK THREAD ERROR:")
+                    print(traceback.format_exc())
+ 
+    threading.Thread(target=process, daemon=True).start()
+    return "OK", 200
+ 
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
