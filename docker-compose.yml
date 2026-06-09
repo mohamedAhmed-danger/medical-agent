@@ -2,9 +2,9 @@ version: '3.8'
 services:
   web:
     build: .
-    container_name: medical-agent
+    container_name: medical-agent-markting
     ports:
-      - "127.0.0.1:5026:5026"
+      - "127.0.0.1:2306:2306"
     volumes:
       - sqlite_data:/app/instance
     env_file:
