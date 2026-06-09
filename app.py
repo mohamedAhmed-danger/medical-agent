@@ -23,7 +23,7 @@ from parsers.facebook import parse_facebook_comment, parse_facebook_message
 from platfroms.facebook_handler import FacebookHandler
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///medical_agent.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////app/instance/medical_agent.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 
